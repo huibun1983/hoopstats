@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0A0A0F">
+  <title>HoopStats - 专业级篮球综合平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- 顶部导航（桌面端） -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <span class="logo-icon">🏀</span>
+      <span class="logo-text">HoopStats</span>
+    </div>
+    <nav>
+      <ul class="topbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" onclick="showPage('games')" id="nav-games">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-text">比赛记录</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" onclick="showPage('teams')" id="nav-teams">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">球队管理</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" onclick="showPage('players')" id="nav-players">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">球员管理</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- 底部导航（移动端） -->
+  <nav class="bottom-bar">
+    <ul class="bottom-bar-nav">
+      <li class="nav-item">
+        <a class="nav-link" onclick="showPage('games')" id="bottom-nav-games">
+          <span class="nav-icon">🏆</span>
+          <span class="nav-text">比赛</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showPage('teams')" id="bottom-nav-teams">
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">球队</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showPage('players')" id="bottom-nav-players">
+          <span class="nav-icon">👤</span>
+          <span class="nav-text">球员</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+    <!-- ==================== 比赛记录页面 ==================== -->
+    <section id="page-games" class="page">
+      <div class="page-header">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="page-title">🏆 比赛记录</h1>
+            <p class="page-subtitle">创建和管理篮球比赛，实时记录精彩瞬间</p>
+          </div>
+          <button class="btn btn-primary" onclick="GameManager.showCreateModal()">
+            ➕ 创建比赛
+          </button>
+        </div>
+      </div>
+
+      <div id="game-list">
+        <!-- 动态加载 -->
+      </div>
+    </section>
+
+    <!-- ==================== 比赛计分页面 ==================== -->
+    <section id="page-score" class="page hidden">
+      <div class="page-header">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="page-title">🏀 比赛进行中</h1>
+            <p class="page-subtitle" id="pause-indicator">▶ 比赛中</p>
+          </div>
+          <div class="flex gap-md">
+            <button class="btn btn-control" onclick="GameManager.togglePause()" id="pause-btn">
+              ⏸ 暂停
+            </button>
+            <button class="btn btn-secondary" onclick="GameManager.backToList()">
+              ← 返回
+            </button>
+            <button class="btn btn-primary" onclick="GameManager.endGame()">
+              结束比赛
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 固定操作区：比分+球队+动作 -->
+      <div class="score-viewport" id="score-viewport">
+
+        <!-- 比分显示（紧凑横条） -->
+        <div class="score-section score-bar">
+          <!-- 主队：队名+比分，左侧显示犯规/暂停 -->
+          <div class="team-score-block">
+            <div class="team-score-info">
+              <div id="home-team-icon" style="font-size:1.5rem;">🏀</div>
+              <div id="home-team-name" class="team-name">主队</div>
+            </div>
+            <div id="home-score" class="score-value home">0</div>
+            <div class="team-stat-badges">
+              <span class="stat-badge foul-badge" id="home-foul-badge" title="队伍犯规">🚨<span id="home-team-fouls">0</span></span>
+              <span class="stat-badge timeout-badge" id="home-timeout-badge" title="剩余暂停">⏸<span id="home-timeouts-left">3</span></span>
+            </div>
+          </div>
+
+          <!-- 中间：节次+计时 -->
+          <div class="score-bar-center">
+            <div id="period-display" class="badge badge-warning">第 1 节</div>
+            <div id="game-timer" class="score-bar-timer">00:00</div>
+            <div id="shot-clock-display" class="shot-clock-display">24</div>
+          </div>
+
+          <!-- 客队：犯规/暂停在右侧，客队比分+队名 -->
+          <div class="team-score-block reverse">
+            <div class="team-stat-badges">
+              <span class="stat-badge timeout-badge" id="away-timeout-badge" title="剩余暂停">⏸<span id="away-timeouts-left">3</span></span>
+              <span class="stat-badge foul-badge" id="away-foul-badge" title="队伍犯规">🚨<span id="away-team-fouls">0</span></span>
+            </div>
+            <div id="away-score" class="score-value away">0</div>
+            <div class="team-score-info">
+              <div id="away-team-icon" style="font-size:1.5rem;">🏀</div>
+              <div id="away-team-name" class="team-name">客队</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 球队+球员 与 动作按钮 并排布局 -->
+        <div class="score-ops-grid">
+
+          <!-- 左侧：当前球队 + 球员 -->
+          <div class="card score-ops-team">
+            <div class="card-header">
+              <span class="card-title">🏀 当前球队</span>
+              <span class="badge badge-warning" id="current-team-indicator">🏀 主队</span>
+            </div>
+            <div class="team-and-players">
+              <!-- 球队切换器 -->
+              <div class="team-selector compact">
+                <button class="team-selector-btn active" id="team-selector-home" onclick="GameManager.switchTeamTo('home')">
+                  <span class="team-selector-icon" id="home-selector-icon">🏀</span>
+                  <span class="team-selector-name" id="home-selector-name">主队</span>
+                  <span class="timeout-pips" id="home-timeout-pips"></span>
+                </button>
+                <button class="team-selector-btn" id="team-selector-away" onclick="GameManager.switchTeamTo('away')">
+                  <span class="team-selector-icon" id="away-selector-icon">🏀</span>
+                  <span class="team-selector-name" id="away-selector-name">客队</span>
+                  <span class="timeout-pips" id="away-timeout-pips"></span>
+                </button>
+              </div>
+              <!-- 场上球员名单 -->
+              <div class="on-court-players" id="single-team-players">
+                <!-- 当前选中球队的场上球员动态加载 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：记录动作 -->
+          <div class="card score-ops-actions" id="actions-section">
+            <div class="card-header">
+              <span class="card-title">📊 记录动作</span>
+              <span class="text-secondary" style="font-size:0.85rem;">快捷键</span>
+            </div>
+
+            <!-- 得分区 -->
+            <div style="margin-bottom:var(--space-sm);">
+              <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:var(--space-xs);">🏀 得分</div>
+              <div class="game-control-panel compact-grid">
+                <button id="btn-fg2m" class="action-btn btn-success" onclick="GameManager.recordAction('fg2m')">
+                  <span style="font-size:1.3rem;">🎯</span>
+                  <span>2分</span>
+                  <span class="btn-key">Q</span>
+                </button>
+                <button id="btn-fg2x" class="action-btn btn-danger" onclick="GameManager.recordAction('fg2x')">
+                  <span style="font-size:1.3rem;">✖</span>
+                  <span>2分miss</span>
+                  <span class="btn-key">Z</span>
+                </button>
+                <button id="btn-fg3m" class="action-btn btn-success" onclick="GameManager.recordAction('fg3m')">
+                  <span style="font-size:1.3rem;">🎯</span>
+                  <span>3分</span>
+                  <span class="btn-key">W</span>
+                </button>
+                <button id="btn-fg3x" class="action-btn btn-danger" onclick="GameManager.recordAction('fg3x')">
+                  <span style="font-size:1.3rem;">✖</span>
+                  <span>3分miss</span>
+                  <span class="btn-key">X</span>
+                </button>
+                <button id="btn-ftm" class="action-btn btn-success" onclick="GameManager.recordAction('ftm')">
+                  <span style="font-size:1.3rem;">🎯</span>
+                  <span>罚球</span>
+                  <span class="btn-key">E</span>
+                </button>
+                <button id="btn-ftx" class="action-btn btn-danger" onclick="GameManager.recordAction('ftx')">
+                  <span style="font-size:1.3rem;">✖</span>
+                  <span>罚球miss</span>
+                  <span class="btn-key">C</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 统计区 -->
+            <div style="margin-bottom:var(--space-sm);">
+              <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:var(--space-xs);">📊 统计</div>
+              <div class="game-control-panel compact-grid">
+                <button id="btn-reb" class="action-btn btn-info" onclick="GameManager.recordAction('reb')">
+                  <span style="font-size:1.3rem;">📊</span>
+                  <span>篮板</span>
+                  <span class="btn-key">R</span>
+                </button>
+                <button id="btn-ast" class="action-btn btn-info" onclick="GameManager.recordAction('ast')">
+                  <span style="font-size:1.3rem;">🎯</span>
+                  <span>助攻</span>
+                  <span class="btn-key">A</span>
+                </button>
+                <button id="btn-stl" class="action-btn btn-warning" onclick="GameManager.recordAction('stl')">
+                  <span style="font-size:1.3rem;">✋</span>
+                  <span>抢断</span>
+                  <span class="btn-key">S</span>
+                </button>
+                <button id="btn-blk" class="action-btn btn-info" onclick="GameManager.recordAction('blk')">
+                  <span style="font-size:1.3rem;">🛡</span>
+                  <span>盖帽</span>
+                  <span class="btn-key">G</span>
+                </button>
+                <button id="btn-tov" class="action-btn btn-warning" onclick="GameManager.recordAction('tov')">
+                  <span style="font-size:1.3rem;">❌</span>
+                  <span>失误</span>
+                  <span class="btn-key">D</span>
+                </button>
+                <button id="btn-foul" class="action-btn btn-danger" onclick="GameManager.recordAction('foul')">
+                  <span style="font-size:1.3rem;">🚨</span>
+                  <span>犯规</span>
+                  <span class="btn-key">F</span>
+                </button>
+                <button id="btn-highlight" class="action-btn btn-control" onclick="GameManager.recordAction('highlight')">
+                  <span style="font-size:1.3rem;">⭐</span>
+                  <span>精彩</span>
+                  <span class="btn-key">H</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="control-buttons">
+              <button id="timeout-btn" class="btn btn-control" onclick="GameManager.requestTimeout()">
+                ⏸ 暂停 <span class="btn-key">T</span>
+              </button>
+              <button id="sub-btn" class="btn btn-control" onclick="GameManager.requestSubstitution()">
+                🔄 换人 <span class="btn-key">Y</span>
+              </button>
+              <button id="undo-btn" class="btn btn-secondary" onclick="GameManager.undoLastAction()">
+                ↩️ 撤销
+              </button>
+            </div>
+          </div>
+
+        </div><!-- /score-ops-grid -->
+
+        <!-- 快捷键提示（在记录动作下方） -->
+        <div class="key-hints-compact" id="key-hints-card">
+          <div id="key-hints" style="display:flex;flex-wrap:wrap;gap:4px;font-size:0.7rem;color:var(--text-secondary);">
+            <!-- 动态加载 -->
+          </div>
+        </div>
+
+      </div><!-- /score-viewport -->
+
+      <!-- 下方滚动区域：事件+统计 -->
+      <div class="score-scroll-area">
+      <div class="card mt-lg">
+        <div class="card-header">
+          <span class="card-title">📋 事件记录</span>
+          <span class="badge">最近20条</span>
+        </div>
+        <div id="event-list" style="max-height:300px;overflow-y:auto;">
+          <div class="text-center text-secondary" style="padding:var(--space-lg);">
+            暂无事件记录
+          </div>
+        </div>
+      </div>
+
+      <!-- 本场数据统计 -->
+      <div class="card mt-lg" id="game-stats-card">
+        <div class="card-header">
+          <span class="card-title">📊 本场数据统计</span>
+        </div>
+        <div class="stats-panel">
+          <!-- 统计标签栏 -->
+          <div class="stats-tabs">
+            <button class="stats-tab active" data-tab="regular" onclick="GameManager.switchStatsTab('regular')">常规数据</button>
+            <button class="stats-tab" data-tab="shooting" onclick="GameManager.switchStatsTab('shooting')">投篮数据</button>
+            <button class="stats-tab" data-tab="advanced" onclick="GameManager.switchStatsTab('advanced')">进阶数据</button>
+            <button class="stats-tab" data-tab="prediction" onclick="GameManager.switchStatsTab('prediction')">比赛预测</button>
+          </div>
+
+          <!-- 统计内容区域 -->
+          <div class="stats-content" id="stats-content">
+            <!-- 主队球员列表 (左侧) -->
+            <div class="stats-player-list" id="stats-home-players">
+              <div class="stats-team-header home">🏀 主队</div>
+              <div class="stats-player-items" id="stats-home-player-items"></div>
+            </div>
+
+            <!-- 数据展示中心 (中间) -->
+            <div class="stats-display" id="stats-display">
+              <!-- 默认显示球队对比 -->
+            </div>
+
+            <!-- 客队球员列表 (右侧) -->
+            <div class="stats-player-list" id="stats-away-players">
+              <div class="stats-team-header away">🏀 客队</div>
+              <div class="stats-player-items" id="stats-away-player-items"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div><!-- /score-scroll-area -->
+    </section>
+
+    <!-- ==================== 球队管理页面 ==================== -->
+    <section id="page-teams" class="page hidden">
+      <div class="page-header">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="page-title">👥 球队管理</h1>
+            <p class="page-subtitle">创建和管理你的篮球队伍</p>
+          </div>
+          <button class="btn btn-primary" onclick="TeamManager.showCreateModal()">
+            ➕ 创建球队
+          </button>
+        </div>
+      </div>
+
+      <div id="team-list">
+        <!-- 动态加载 -->
+      </div>
+    </section>
+
+    <!-- ==================== 球员管理页面 ==================== -->
+    <section id="page-players" class="page hidden">
+      <div class="page-header">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="page-title">👤 球员管理</h1>
+            <p class="page-subtitle">管理球员信息和个人数据</p>
+          </div>
+          <div class="flex gap-md">
+            <button class="btn btn-secondary" onclick="PlayerManager.exportPlayersCSV()" title="导出 CSV">
+              📥 导出 CSV
+            </button>
+            <button class="btn btn-secondary" onclick="PlayerManager.showBatchImportModal()">
+              📋 批量导入
+            </button>
+            <button class="btn btn-primary" onclick="PlayerManager.showCreateModal()">
+              ➕ 添加球员
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div id="player-stats" class="flex gap-lg mb-lg">
+        <!-- 动态加载 -->
+      </div>
+
+      <div id="player-list">
+        <!-- 动态加载 -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== 模态框 ==================== -->
+
+  <!-- 球队模态框 -->
+  <div id="team-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">创建球队</h3>
+        <button class="modal-close" onclick="TeamManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="team-form">
+          <div class="form-group">
+            <label class="form-label">球队名称 *</label>
+            <input type="text" id="team-name" class="form-input" placeholder="例如：广州华南虎" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">城市</label>
+            <input type="text" id="team-city" class="form-input" placeholder="例如：广州">
+          </div>
+          <div class="form-group">
+            <label class="form-label">球队颜色</label>
+            <select id="team-color" class="form-input form-select">
+              <!-- 动态加载 -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">成立时间</label>
+            <input type="number" id="team-founded" class="form-input" placeholder="例如：2020" min="1900" max="2030">
+          </div>
+          <div class="form-group">
+            <label class="form-label">球队简介</label>
+            <textarea id="team-description" class="form-input form-textarea" placeholder="描述球队历史、理念等..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="TeamManager.closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="TeamManager.saveTeam(event)">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 球员模态框 -->
+  <div id="player-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="player-modal-title">添加球员</h3>
+        <button class="modal-close" onclick="PlayerManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="player-form">
+          <div class="form-group">
+            <label class="form-label">球员姓名 *</label>
+            <input type="text" id="player-name" class="form-input" placeholder="例如：张三" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">所属球队 *</label>
+            <select id="player-team" class="form-input form-select" required>
+              <!-- 动态加载 -->
+            </select>
+          </div>
+          <div class="flex gap-md">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">球衣号码</label>
+              <input type="number" id="player-number" class="form-input" placeholder="0-99" min="0" max="99">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">位置</label>
+              <select id="player-position" class="form-input form-select">
+                <option value="">选择位置</option>
+                <option value="PG">🏀 控球后卫 PG</option>
+                <option value="SG">🏀 得分后卫 SG</option>
+                <option value="SF">🏀 小前锋 SF</option>
+                <option value="PF">🏀 大前锋 PF</option>
+                <option value="C">🏀 中锋 C</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex gap-md">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">身高 (cm)</label>
+              <input type="number" id="player-height" class="form-input" placeholder="例如：185" min="100" max="250">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">体重 (kg)</label>
+              <input type="number" id="player-weight" class="form-input" placeholder="例如：80" min="30" max="200">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">手机号码</label>
+            <input type="tel" id="player-phone" class="form-input" placeholder="用于联系通知" maxlength="11">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="PlayerManager.closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="PlayerManager.savePlayer(event)">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批量导入模态框 -->
+  <div id="batch-import-modal" class="modal-overlay">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">📋 批量导入球员</h3>
+        <button class="modal-close" onclick="PlayerManager.closeBatchImportModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="batch-import-form">
+          <!-- 模板下载 -->
+          <div class="card mb-lg" style="background:var(--bg-secondary);border:1px dashed var(--border-color);">
+            <div class="card-body flex items-center justify-between">
+              <div>
+                <div style="font-weight:600;margin-bottom:4px;">📄 CSV 格式说明</div>
+                <div style="font-size:0.85rem;color:var(--text-dim);">
+                  表头：name,team,position,number,height,weight,phone<br>
+                  位置：PG | SG | SF | PF | C
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="PlayerManager.exportTemplateCSV()">
+                📥 下载模板
+              </button>
+            </div>
+          </div>
+
+          <!-- 球队选择 -->
+          <div class="form-group">
+            <label class="form-label">默认球队（可选）</label>
+            <select id="batch-import-team" class="form-input form-select">
+              <option value="">选择球队（留空则按球队名列自动匹配）</option>
+            </select>
+            <div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px;">
+              如 CSV 中有球队名会自动匹配；未匹配到时使用此处选择的球队
+            </div>
+          </div>
+
+          <!-- CSV 输入 -->
+          <div class="form-group">
+            <label class="form-label">粘贴 CSV 数据</label>
+            <textarea id="batch-csv-text" class="form-input form-textarea" rows="8"
+              placeholder="name,team,position,number,height,weight,phone
+张三,广州华南虎,PG,23,185,80,13800138001
+李四,广州华南虎,SG,8,180,75,13800138002
+王五,深圳队,C,55,195,90,13800138003"></textarea>
+          </div>
+
+          <!-- 文件上传 -->
+          <div class="form-group">
+            <label class="form-label">或上传 CSV 文件</label>
+            <input type="file" id="batch-csv-file" class="form-input" accept=".csv,text/csv"
+              onchange="PlayerManager.handleCSVFileUpload(event)">
+          </div>
+
+          <!-- 预览区域 -->
+          <div id="batch-preview" class="mt-lg">
+            <div class="text-secondary text-sm">点击"预览"查看导入数据</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="PlayerManager.closeBatchImportModal()">取消</button>
+        <button class="btn btn-secondary" onclick="PlayerManager.previewBatchImport()">🔍 预览</button>
+        <button class="btn btn-primary" onclick="PlayerManager.executeBatchImport()">✅ 确认导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 比赛模态框 -->
+  <div id="game-modal" class="modal-overlay">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">创建比赛</h3>
+        <button class="modal-close" onclick="GameManager.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="game-form">
+          <!-- 球队选择 -->
+          <div class="form-section">
+            <div class="form-section-title">🏀 对阵双方</div>
+            <div class="flex gap-md">
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">主队</label>
+                <select id="game-home-team" class="form-input form-select" onchange="GameManager.loadTeamPlayers('home')" required>
+                  <!-- 动态加载 -->
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">客队</label>
+                <select id="game-away-team" class="form-input form-select" onchange="GameManager.loadTeamPlayers('away')" required>
+                  <!-- 动态加载 -->
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 赛制设置 -->
+          <div class="form-section">
+            <div class="form-section-title">⚙️ 比赛规则</div>
+            <div class="flex gap-md flex-wrap">
+              <div class="form-group" style="flex:1;min-width:120px;">
+                <label class="form-label">节数</label>
+                <select id="game-periods" class="form-input form-select">
+                  <option value="2">2 节</option>
+                  <option value="4" selected>4 节（标准）</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;min-width:120px;">
+                <label class="form-label">每节时长</label>
+                <select id="game-period-minutes" class="form-input form-select">
+                  <option value="10">10 分钟</option>
+                  <option value="12" selected>12 分钟（FIBA标准）</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;min-width:120px;">
+                <label class="form-label">暂停次数/队</label>
+                <select id="game-timeouts" class="form-input form-select">
+                  <option value="2">2 次</option>
+                  <option value="3" selected>3 次（标准）</option>
+                  <option value="5">5 次</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;min-width:120px;">
+                <label class="form-label">犯规罚球阈值</label>
+                <select id="game-foul-limit" class="form-input form-select">
+                  <option value="4">4 次</option>
+                  <option value="5" selected>5 次（标准）</option>
+                  <option value="6">6 次</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;min-width:120px;">
+                <label class="form-label">进攻时钟（秒）</label>
+                <select id="game-shot-clock" class="form-input form-select">
+                  <option value="0">不使用</option>
+                  <option value="24" selected>24 秒（NBA）</option>
+                  <option value="14">14 秒（篮板后）</option>
+                  <option value="20">20 秒</option>
+                  <option value="30">30 秒（FIBA旧规）</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 比赛信息 -->
+          <div class="form-section">
+            <div class="form-section-title">📋 比赛信息</div>
+            <div class="flex gap-md">
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">比赛日期</label>
+                <input type="date" id="game-date" class="form-input">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">比赛地点</label>
+                <input type="text" id="game-location" class="form-input" placeholder="例如：广州体育馆">
+              </div>
+            </div>
+          </div>
+
+          <!-- 球员阵容（动态加载） -->
+          <div class="form-section">
+            <div class="form-section-title">👥 首发阵容</div>
+            <div id="lineup-selection" class="lineup-selection">
+              <p class="text-secondary text-sm">请先选择主客队以配置首发阵容</p>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="GameManager.closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="GameManager.createGame(event)">创建并开始</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 换人模态框 -->
+  <div id="sub-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">🔄 换人</h3>
+        <button class="modal-close" onclick="GameManager.closeSubModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="sub-modal-content">
+          <!-- 离场球员 -->
+          <div class="sub-section">
+            <div class="sub-section-title">⬇️ 选择离场球员</div>
+            <div id="sub-out-list" class="sub-player-list"></div>
+          </div>
+          <!-- 箭头指示 -->
+          <div class="sub-arrow">⬇️</div>
+          <!-- 入场球员 -->
+          <div class="sub-section">
+            <div class="sub-section-title">⬆️ 选择入场球员</div>
+            <div id="sub-in-list" class="sub-player-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="GameManager.closeSubModal()">取消</button>
+        <button class="btn btn-primary" id="sub-confirm-btn" onclick="GameManager.confirmSubstitution()" disabled>✅ 确认换人</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 容器 -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- 脚本 -->
+  <script src="js/db.js"></script>
+  <script src="js/teams.js"></script>
+  <script src="js/players.js"></script>
+  <script src="js/games.js"></script>
+  <script>
+    // 页面导航
+    function showPage(page) {
+      // 隐藏所有页面
+      document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+
+      // 显示目标页面
+      document.getElementById(`page-${page}`).classList.remove('hidden');
+
+      // 更新顶部导航
+      document.querySelectorAll('.topbar-nav .nav-link').forEach(n => n.classList.remove('active'));
+      const topNav = document.getElementById(`nav-${page}`);
+      if (topNav) topNav.classList.add('active');
+
+      // 更新底部导航（移动端）
+      document.querySelectorAll('.bottom-bar-nav .nav-link').forEach(n => n.classList.remove('active'));
+      const bottomNav = document.getElementById(`bottom-nav-${page}`);
+      if (bottomNav) bottomNav.classList.add('active');
+
+      // 渲染对应模块
+      if (page === 'teams') TeamManager.render();
+      if (page === 'players') PlayerManager.render();
+      if (page === 'games') GameManager.render();
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 默认显示比赛页面
+      showPage('games');
+
+      // 初始化比赛管理
+      GameManager.init();
+    });
+  </script>
+</body>
+</html>
