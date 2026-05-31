@@ -669,7 +669,6 @@ const Dashboard = {
   }
 };
 
-// 初始化
-document.addEventListener('DOMContentLoaded', () => {
-  Dashboard.init();
-});
+// 注意：SPA模式下不由DOMContentLoaded初始化
+// 由 index.html 的 showPage('dashboard') 调用 Dashboard.init()
+// 保留此文件仅用于定义 Dashboard 全局对象

@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <!-- 顶部导航（桌面端） -->
@@ -38,7 +40,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="dashboard.html" id="nav-dashboard">
+          <a class="nav-link" onclick="showPage('dashboard')" id="nav-dashboard">
             <span class="nav-icon">📊</span>
             <span class="nav-text">数据看板</span>
           </a>
@@ -69,7 +71,7 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="dashboard.html" id="bottom-nav-dashboard">
+        <a class="nav-link" onclick="showPage('dashboard')" id="bottom-nav-dashboard">
           <span class="nav-icon">📊</span>
           <span class="nav-text">看板</span>
         </a>
@@ -402,6 +404,85 @@
         <!-- 动态加载 -->
       </div>
     </section>
+
+    <!-- ==================== 数据看板页面 ==================== -->
+    <section id="page-dashboard" class="page hidden">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-md);">
+        <div>
+          <h1 class="page-title">📊 数据看板</h1>
+          <p class="page-subtitle" id="dash-data-summary">加载中...</p>
+        </div>
+        <div class="dash-tabs" id="dash-tabs">
+          <button class="dash-tab active" data-view="team" onclick="Dashboard.switchView('team')">🏀 球队视角</button>
+          <button class="dash-tab" data-view="player" onclick="Dashboard.switchView('player')">👤 个人视角</button>
+        </div>
+      </div>
+
+      <!-- ============== 球队视角 ============== -->
+      <section id="dash-team-view" class="dash-view">
+
+        <div class="dash-selector" id="team-selector-area">
+          <label class="dash-selector-label">选择球队</label>
+          <div class="dash-pills" id="team-pills"></div>
+        </div>
+
+        <div class="dash-metrics" id="team-metrics"></div>
+
+        <div class="dash-charts-row">
+          <div class="card dash-chart-card">
+            <div class="card-header"><span class="card-title">📈 得分贡献 TOP5</span></div>
+            <div class="chart-wrap"><canvas id="chart-team-contrib"></canvas></div>
+          </div>
+          <div class="card dash-chart-card">
+            <div class="card-header"><span class="card-title">🏆 近6场胜负走势</span></div>
+            <div class="chart-wrap"><canvas id="chart-team-form"></canvas></div>
+          </div>
+        </div>
+
+        <div class="dash-charts-row">
+          <div class="card dash-chart-card">
+            <div class="card-header"><span class="card-title">⚖️ 效率对比</span></div>
+            <div class="chart-wrap"><canvas id="chart-team-efficiency"></canvas></div>
+          </div>
+          <div class="card dash-chart-card">
+            <div class="card-header"><span class="card-title">📋 球员数据总览</span></div>
+            <div class="dash-table-wrap" id="team-player-table"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== 个人视角 ============== -->
+      <section id="dash-player-view" class="dash-view" style="display:none;">
+        <div class="dash-selector" id="player-selector-area">
+          <label class="dash-selector-label">选择球员</label>
+          <div class="dash-pills" id="player-pills"></div>
+        </div>
+
+        <div class="dash-charts-row">
+          <div class="card dash-chart-card" style="flex:1;min-width:280px;">
+            <div class="player-profile" id="player-profile-card"></div>
+          </div>
+          <div class="card dash-chart-card" style="flex:2;min-width:400px;">
+            <div class="card-header"><span class="card-title">🎯 六维能力雷达</span></div>
+            <div class="chart-wrap" style="max-width:420px;margin:0 auto;"><canvas id="chart-player-radar"></canvas></div>
+          </div>
+        </div>
+
+        <div class="dash-metrics" id="player-metrics"></div>
+
+        <div class="dash-charts-row">
+          <div class="card dash-chart-card">
+            <div class="card-header"><span class="card-title">🎯 投篮分布</span></div>
+            <div class="chart-wrap" style="max-width:320px;margin:0 auto;"><canvas id="chart-player-shooting"></canvas></div>
+          </div>
+          <div class="card dash-chart-card">
+            <div class="card-header"><span class="card-title">📈 得分趋势（按场次）</span></div>
+            <div class="chart-wrap"><canvas id="chart-player-trend"></canvas></div>
+          </div>
+        </div>
+      </section>
+    </section>
+
   </main>
 
   <!-- ==================== 模态框 ==================== -->
@@ -716,6 +797,7 @@
   <script src="js/teams.js"></script>
   <script src="js/players.js"></script>
   <script src="js/games.js"></script>
+  <script src="js/dashboard.js"></script>
   <script>
     // 页面导航
     function showPage(page) {
@@ -723,7 +805,8 @@
       document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
 
       // 显示目标页面
-      document.getElementById(`page-${page}`).classList.remove('hidden');
+      const target = document.getElementById(`page-${page}`);
+      if (target) target.classList.remove('hidden');
 
       // 更新顶部导航
       document.querySelectorAll('.topbar-nav .nav-link').forEach(n => n.classList.remove('active'));
@@ -736,9 +819,14 @@
       if (bottomNav) bottomNav.classList.add('active');
 
       // 渲染对应模块
-      if (page === 'teams') TeamManager.render();
+      if (page === 'teams')   TeamManager.render();
       if (page === 'players') PlayerManager.render();
-      if (page === 'games') GameManager.render();
+      if (page === 'games')   GameManager.render();
+      if (page === 'dashboard') {
+        if (typeof Dashboard !== 'undefined' && typeof Dashboard.init === 'function') {
+          Dashboard.init();
+        }
+      }
     }
 
     // 初始化
@@ -746,8 +834,13 @@
       // 默认显示比赛页面
       showPage('games');
 
-      // 初始化比赛管理
+      // 初始化各模块
       GameManager.init();
+
+      // 看板预加载（不在首屏渲染，等用户点击）
+      if (typeof Dashboard !== 'undefined' && typeof Dashboard.preload === 'function') {
+        Dashboard.preload();
+      }
     });
   </script>
 </body>
