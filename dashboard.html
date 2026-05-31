@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0A0A0F">
+  <title>HoopStats - 数据看板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-logo">
+      <span class="logo-icon">📊</span>
+      <span class="logo-text">HoopStats 看板</span>
+    </div>
+    <nav>
+      <ul class="topbar-nav">
+        <li class="nav-item"><a class="nav-link" href="index.html"><span class="nav-icon">🏀</span><span class="nav-text">比赛</span></a></li>
+        <li class="nav-item"><a class="nav-link active"><span class="nav-icon">📊</span><span class="nav-text">看板</span></a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <!-- 顶部：维度选择 -->
+    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-md);">
+      <div>
+        <h1 class="page-title">📊 数据看板</h1>
+        <p class="page-subtitle" id="dash-data-summary">加载中...</p>
+      </div>
+      <div class="dash-tabs" id="dash-tabs">
+        <button class="dash-tab active" data-view="team" onclick="Dashboard.switchView('team')">🏀 球队视角</button>
+        <button class="dash-tab" data-view="player" onclick="Dashboard.switchView('player')">👤 个人视角</button>
+      </div>
+    </div>
+
+    <!-- ============== 球队视角 ============== -->
+    <section id="dash-team-view" class="dash-view">
+      <!-- 球队选择器 -->
+      <div class="dash-selector" id="team-selector-area">
+        <label class="dash-selector-label">选择球队</label>
+        <div class="dash-pills" id="team-pills"></div>
+      </div>
+
+      <!-- 核心指标卡 -->
+      <div class="dash-metrics" id="team-metrics"></div>
+
+      <!-- 双栏图表 -->
+      <div class="dash-charts-row">
+        <div class="card dash-chart-card">
+          <div class="card-header"><span class="card-title">📈 得分贡献 TOP5</span></div>
+          <div class="chart-wrap"><canvas id="chart-team-contrib"></canvas></div>
+        </div>
+        <div class="card dash-chart-card">
+          <div class="card-header"><span class="card-title">🏆 近6场胜负走势</span></div>
+          <div class="chart-wrap"><canvas id="chart-team-form"></canvas></div>
+        </div>
+      </div>
+
+      <!-- 底部双栏 -->
+      <div class="dash-charts-row">
+        <div class="card dash-chart-card">
+          <div class="card-header"><span class="card-title">⚖️ 效率对比</span></div>
+          <div class="chart-wrap"><canvas id="chart-team-efficiency"></canvas></div>
+        </div>
+        <div class="card dash-chart-card">
+          <div class="card-header"><span class="card-title">📋 球员数据总览</span></div>
+          <div class="dash-table-wrap" id="team-player-table"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== 个人视角 ============== -->
+    <section id="dash-player-view" class="dash-view" style="display:none;">
+      <!-- 球员选择器 -->
+      <div class="dash-selector" id="player-selector-area">
+        <label class="dash-selector-label">选择球员</label>
+        <div class="dash-pills" id="player-pills"></div>
+      </div>
+
+      <!-- 个人档案卡 -->
+      <div class="dash-charts-row">
+        <div class="card dash-chart-card" style="flex:1;min-width:280px;">
+          <div class="player-profile" id="player-profile-card"></div>
+        </div>
+        <div class="card dash-chart-card" style="flex:2;min-width:400px;">
+          <div class="card-header"><span class="card-title">🎯 六维能力雷达</span></div>
+          <div class="chart-wrap" style="max-width:420px;margin:0 auto;"><canvas id="chart-player-radar"></canvas></div>
+        </div>
+      </div>
+
+      <!-- 个人指标卡 -->
+      <div class="dash-metrics" id="player-metrics"></div>
+
+      <!-- 双栏图表 -->
+      <div class="dash-charts-row">
+        <div class="card dash-chart-card">
+          <div class="card-header"><span class="card-title">🎯 投篮分布</span></div>
+          <div class="chart-wrap" style="max-width:320px;margin:0 auto;"><canvas id="chart-player-shooting"></canvas></div>
+        </div>
+        <div class="card dash-chart-card">
+          <div class="card-header"><span class="card-title">📈 得分趋势（按场次）</span></div>
+          <div class="chart-wrap"><canvas id="chart-player-trend"></canvas></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

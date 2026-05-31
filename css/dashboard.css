@@ -1,0 +1,321 @@
+/**
+ * HoopStats - 看板页面样式
+ */
+
+/* ============== 视角切换标签 ============== */
+.dash-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+}
+
+.dash-tab {
+  padding: var(--space-sm) var(--space-lg);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  font-family: 'Barlow', 'PingFang SC', sans-serif;
+}
+
+.dash-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.dash-tab.active {
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-orange-dim));
+  color: var(--accent-white);
+  box-shadow: var(--shadow-glow-orange);
+}
+
+/* ============== 选择器 ============== */
+.dash-selector {
+  margin-bottom: var(--space-lg);
+}
+
+.dash-selector-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-sm);
+  display: block;
+}
+
+.dash-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.dash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: 'Barlow', 'PingFang SC', sans-serif;
+  white-space: nowrap;
+}
+
+.dash-pill:hover {
+  border-color: var(--accent-orange);
+  color: var(--text-primary);
+}
+
+.dash-pill.active {
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-orange-dim));
+  color: var(--accent-white);
+  border-color: transparent;
+  box-shadow: var(--shadow-glow-orange);
+}
+
+.pill-team {
+  font-size: 0.7rem;
+  color: inherit;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* ============== 指标卡片 ============== */
+.dash-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.dash-metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.dash-metric-card:hover {
+  border-color: var(--accent-orange);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.dash-metric-card .metric-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  opacity: 0.15;
+}
+
+.dash-metric-card .metric-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.dash-metric-card .metric-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.dash-metric-card .metric-sub {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.dash-metric-card.metric-up .metric-value { color: var(--color-success); }
+.dash-metric-card.metric-down .metric-value { color: var(--color-danger); }
+
+/* ============== 图表行 ============== */
+.dash-charts-row {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.dash-chart-card {
+  flex: 1;
+  min-width: 320px;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+.chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ============== 球员档案 ============== */
+.player-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-orange-dim));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent-white);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-glow-orange);
+}
+
+.per-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Oswald', sans-serif;
+}
+
+/* ============== 球员数据表格 ============== */
+.dash-table-wrap {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.dash-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.dash-table th {
+  background: var(--bg-secondary);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dash-table td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.dash-table tr:hover td {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.dash-table td.highlight {
+  font-weight: 700;
+  color: var(--accent-orange);
+  font-family: 'Oswald', sans-serif;
+  font-size: 1rem;
+}
+
+.table-player-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.table-player-pos {
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* ============== 响应式 ============== */
+@media (max-width: 768px) {
+  .dash-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-metric-card .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .dash-charts-row {
+    flex-direction: column;
+  }
+
+  .dash-chart-card {
+    min-width: 100%;
+  }
+
+  .chart-wrap {
+    height: 240px;
+  }
+
+  .dash-tabs {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dash-pills {
+    gap: 6px;
+  }
+
+  .dash-pill {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-metrics {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+  }
+
+  .dash-metric-card {
+    padding: var(--space-md);
+  }
+
+  .dash-metric-card .metric-value {
+    font-size: 1.3rem;
+  }
+
+  .chart-wrap {
+    height: 200px;
+  }
+}
