@@ -47,6 +47,10 @@
         </li>
       </ul>
     </nav>
+    <div class="topbar-user" id="nav-user-area">
+      <button class="btn btn-sm btn-outline" onclick="Auth.showModal('login')">登录</button>
+      <button class="btn btn-sm btn-primary" onclick="Auth.showModal('register')">注册</button>
+    </div>
   </header>
 
   <!-- 底部导航（移动端） -->
@@ -74,6 +78,12 @@
         <a class="nav-link" onclick="showPage('dashboard')" id="bottom-nav-dashboard">
           <span class="nav-icon">📊</span>
           <span class="nav-text">看板</span>
+        </a>
+      </li>
+      <li class="nav-item" id="bottom-nav-user-area">
+        <a class="nav-link" onclick="Auth.showModal('login')">
+          <span class="nav-icon">🔑</span>
+          <span class="nav-text">登录</span>
         </a>
       </li>
     </ul>
@@ -352,6 +362,16 @@
         </div>
       </div>
       </div><!-- /score-scroll-area -->
+
+      <!-- BoxScore：比赛结束后展示（仅 ended 比赛显示） -->
+      <div class="card mt-lg" id="boxscore-card" style="display:none;">
+        <div class="card-header">
+          <span class="card-title">📋 球员数据 BoxScore</span>
+        </div>
+        <div class="stats-panel">
+          <div id="boxscore-content"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ==================== 球队管理页面 ==================== -->
@@ -789,6 +809,35 @@
     </div>
   </div>
 
+  <!-- ==================== 认证模态框 ==================== -->
+  <div id="auth-modal" class="modal-overlay" onclick="if(event.target===this) Auth.closeModal()">
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="auth-modal-title">🔑 登录</h3>
+        <button class="modal-close" onclick="Auth.closeModal()">✕</button>
+      </div>
+      <form id="auth-form" class="modal-body" style="display:flex;flex-direction:column;gap:var(--space-md);">
+        <div id="auth-name-group">
+          <label class="form-label">昵称</label>
+          <input type="text" id="auth-name" class="form-input" placeholder="你的昵称" maxlength="30">
+        </div>
+        <div>
+          <label class="form-label">邮箱 <span style="color:var(--color-danger);">*</span></label>
+          <input type="email" id="auth-email" class="form-input" placeholder="example@mail.com" required autocomplete="email">
+        </div>
+        <div>
+          <label class="form-label">密码 <span style="color:var(--color-danger);">*</span></label>
+          <input type="password" id="auth-password" class="form-input" placeholder="至少6位字符" required minlength="6" autocomplete="current-password">
+        </div>
+        <div id="auth-error" class="form-error" style="display:none;"></div>
+      </form>
+      <div class="modal-footer" style="flex-direction:column;gap:var(--space-sm);">
+        <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block" onclick="document.getElementById('auth-form').requestSubmit()">登录</button>
+        <button type="button" id="auth-switch-btn" class="btn btn-ghost btn-sm" style="width:100%;">还没有账号？去注册</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast 容器 -->
   <div id="toast-container" class="toast-container"></div>
 
@@ -797,6 +846,8 @@
   <script src="js/teams.js"></script>
   <script src="js/players.js"></script>
   <script src="js/games.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/dashboard.js"></script>
   <script>
     // 页面导航
@@ -836,6 +887,7 @@
 
       // 初始化各模块
       GameManager.init();
+      Auth.init();
 
       // 看板预加载（不在首屏渲染，等用户点击）
       if (typeof Dashboard !== 'undefined' && typeof Dashboard.preload === 'function') {

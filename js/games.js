@@ -693,6 +693,9 @@ const GameManager = {
 
     // 更新控制按钮状态
     this.updateControlButtons();
+
+    // BoxScore（比赛结束后显示）
+    this.renderBoxScore();
   },
 
   /**
@@ -1300,14 +1303,16 @@ const GameManager = {
     const team = this.currentTeam;
     const player = this.currentPlayer;
 
-    // 保存到历史（用于撤销）
-    this.eventHistory.push({
+    // 保存到历史（用于撤销）—— eventId 稍后由 addEvent 填充
+    const historyEntry = {
       action,
       team,
       player: player ? { ...player } : null,
       scoreDelta: 0,
+      eventId: null,  // 将在 addEvent 后设置
       timestamp: Date.now()
-    });
+    };
+    this.eventHistory.push(historyEntry);
 
     // 根据动作更新数据
     let scoreDelta = 0;
@@ -1368,9 +1373,14 @@ const GameManager = {
         break;
     }
 
-    // 更新历史记录的分值变化
+    // 更新历史记录的分值变化 + 事件ID（用于撤销匹配）
     if (this.eventHistory.length > 0) {
       this.eventHistory[this.eventHistory.length - 1].scoreDelta = scoreDelta;
+      // 从 events 数组中取最新事件 ID 存储到历史记录
+      const events = this.currentGame.events || [];
+      if (events.length > 0) {
+        this.eventHistory[this.eventHistory.length - 1].eventId = events[events.length - 1].id;
+      }
     }
 
     // 更新显示
@@ -1423,8 +1433,9 @@ const GameManager = {
     const lastEvent = this.eventHistory.pop();
     const events = this.currentGame.events;
 
-    // 找到并移除最后一个事件
-    const eventIndex = events.findIndex(e => e.id === lastEvent.id);
+    // 找到并移除最后一个事件（使用存储的 eventId 匹配）
+    const matchId = lastEvent.eventId || lastEvent.id;  // 兼容旧数据
+    const eventIndex = events.findIndex(e => e.id === matchId);
     if (eventIndex > -1) {
       events.splice(eventIndex, 1);
     }
@@ -1559,7 +1570,7 @@ const GameManager = {
 
       if (awayTeam) {
         awayTeam.gamesPlayed = (awayTeam.gamesPlayed || 0) + 1;
-        if (awayTeam.wins > game.homeScore) {
+        if (game.awayScore > game.homeScore) {
           awayTeam.wins = (awayTeam.wins || 0) + 1;
         } else {
           awayTeam.losses = (awayTeam.losses || 0) + 1;
@@ -2031,7 +2042,149 @@ const GameManager = {
     if (!this.currentGame) return;
     this.renderStatsPlayers();
     this.renderStatsContent();
-  }
+  },
+
+  /**
+   * 计算 BoxScore —— 从比赛事件中聚合每球员统计
+   * @returns {{ home: [], away: [] }} 主客队球员统计数组
+   */
+  calcBoxScore() {
+    if (!this.currentGame) return { home: [], away: [] };
+
+    const game = this.currentGame;
+    const events = game.events || [];
+    const score = {};
+
+    // 初始化所有参赛球员的统计
+    const allPlayers = [
+      ...(game.homePlayers || []).map(p => ({ ...p, team: 'home' })),
+      ...(game.awayPlayers || []).map(p => ({ ...p, team: 'away' }))
+    ];
+
+    allPlayers.forEach(p => {
+      score[p.id] = {
+        id: p.id,
+        name: p.name,
+        team: p.team,
+        number: p.number || '',
+        pts: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0,
+        ftm: 0, fta: 0, reb: 0, ast: 0, stl: 0,
+        blk: 0, tov: 0, pf: 0, min: 0
+      };
+    });
+
+    // 遍历事件累加统计
+    events.forEach(e => {
+      const pid = e.playerId;
+      if (!pid || !score[pid]) return;
+
+      const s = score[pid];
+      switch (e.action) {
+        case '2分命中': s.pts += 2; s.fgm += 1; s.fga += 1; break;
+        case '2分不中': s.fga += 1; break;
+        case '3分命中': s.pts += 3; s.fgm += 1; s.fga += 1; s.fg3m += 1; s.fg3a += 1; break;
+        case '3分不中': s.fga += 1; s.fg3a += 1; break;
+        case '罚球命中': s.pts += 1; s.ftm += 1; s.fta += 1; break;
+        case '罚球不中': s.fta += 1; break;
+        case '篮板': s.reb += 1; break;
+        case '助攻': s.ast += 1; break;
+        case '抢断': s.stl += 1; break;
+        case '盖帽': s.blk += 1; break;
+        case '失误': s.tov += 1; break;
+        case '犯规': s.pf += 1; break;
+      }
+    });
+
+    // 按团队分组、按得分降序排列
+    const home = allPlayers
+      .filter(p => p.team === 'home')
+      .map(p => score[p.id])
+      .filter(s => s && (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.pf > 0)) // 至少有一项统计
+      .sort((a, b) => b.pts - a.pts);
+
+    const away = allPlayers
+      .filter(p => p.team === 'away')
+      .map(p => score[p.id])
+      .filter(s => s && (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.pf > 0))
+      .sort((a, b) => b.pts - a.pts);
+
+    return { home, away };
+  },
+
+  /**
+   * 渲染 BoxScore 表格
+   */
+  renderBoxScore() {
+    const card = document.getElementById('boxscore-card');
+    const content = document.getElementById('boxscore-content');
+    if (!card || !content) return;
+
+    // 仅已结束的比赛显示 BoxScore
+    if (!this.currentGame || this.currentGame.status !== 'ended') {
+      card.style.display = 'none';
+      return;
+    }
+
+    const { home, away } = this.calcBoxScore();
+    const hasData = home.length > 0 || away.length > 0;
+
+    if (!hasData) {
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = '';
+
+    // 顶部表头缩写
+    const headers = ['#', '球员', 'PTS', 'FG', '3P', 'FT', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'PF'];
+    const cols = ['number', 'name', 'pts', 'fg', 'fg3', 'ft', 'reb', 'ast', 'stl', 'blk', 'tov', 'pf'];
+
+    const renderTeamTable = (teamLabel, players, teamClass) => {
+      if (players.length === 0) return '';
+      return `
+        <div class="stats-team-header ${teamClass}">${teamLabel}</div>
+        <div class="boxscore-table-wrap">
+          <table class="boxscore-table">
+            <thead>
+              <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${players.map(p => `
+                <tr>
+                  <td class="bs-num">${p.number}</td>
+                  <td class="bs-name">${p.name}</td>
+                  <td class="bs-highlight">${p.pts}</td>
+                  <td>${p.fgm}-${p.fga}</td>
+                  <td>${p.fg3m}-${p.fg3a}</td>
+                  <td>${p.ftm}-${p.fta}</td>
+                  <td>${p.reb}</td>
+                  <td>${p.ast}</td>
+                  <td>${p.stl}</td>
+                  <td>${p.blk}</td>
+                  <td>${p.tov}</td>
+                  <td>${p.pf}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    };
+
+    const homeTeamName = (() => {
+      const t = DB.getTeams().find(t => t.id === this.currentGame.homeTeamId);
+      return t ? `🏀 ${t.name}` : '🏀 主队';
+    })();
+    const awayTeamName = (() => {
+      const t = DB.getTeams().find(t => t.id === this.currentGame.awayTeamId);
+      return t ? `🏀 ${t.name}` : '🏀 客队';
+    })();
+
+    content.innerHTML = `
+      ${renderTeamTable(homeTeamName, home, 'home')}
+      ${renderTeamTable(awayTeamName, away, 'away')}
+    `;
+  },
 };
 
 // 导出

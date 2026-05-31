@@ -2475,3 +2475,204 @@ body {
     font-size: 1.2rem;
   }
 }
+
+/* ==================== BoxScore 表格 ==================== */
+#boxscore-card {
+  margin-bottom: var(--space-xl);
+}
+
+.boxscore-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: var(--space-lg);
+}
+
+.boxscore-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.boxscore-table thead th {
+  background: var(--color-bg-secondary);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.boxscore-table thead th:first-child,
+.boxscore-table thead th:nth-child(2) {
+  text-align: left;
+  padding-left: 12px;
+}
+
+.boxscore-table tbody td {
+  padding: 6px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.88rem;
+}
+
+.boxscore-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.boxscore-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.bs-num {
+  width: 32px;
+  color: var(--text-dim) !important;
+  font-size: 0.78rem !important;
+  padding-left: 12px !important;
+  text-align: left !important;
+}
+
+.bs-name {
+  text-align: left !important;
+  color: var(--text-primary) !important;
+  font-family: 'Barlow', sans-serif !important;
+  font-weight: 500;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bs-highlight {
+  color: var(--color-accent) !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+}
+
+@media (max-width: 480px) {
+  .boxscore-table {
+    font-size: 0.72rem;
+  }
+  .boxscore-table thead th {
+    font-size: 0.65rem;
+    padding: 6px 3px;
+  }
+  .boxscore-table tbody td {
+    padding: 5px 3px;
+    font-size: 0.78rem;
+  }
+  .bs-name {
+    max-width: 60px;
+  }
+}
+
+/* ==================== 用户认证 ==================== */
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+.nav-user-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px 4px 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nav-user-badge:hover {
+  background: var(--color-bg-secondary);
+}
+
+.nav-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+.nav-user-name {
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#auth-form .form-label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+#auth-form .form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-input);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-family: 'Barlow', sans-serif;
+}
+
+#auth-form .form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.15);
+}
+
+.form-error {
+  padding: 8px 12px;
+  background: rgba(255, 71, 87, 0.1);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
+  font-size: 0.82rem;
+}
+
+.desk-only {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .desk-only {
+    display: inline;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar-user {
+    display: none;
+  }
+  #auth-modal .modal-box {
+    margin: var(--space-md);
+    max-width: none !important;
+    width: calc(100vw - 2 * var(--space-md));
+  }
+}
