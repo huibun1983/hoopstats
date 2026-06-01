@@ -1,9 +1,9 @@
 # HoopStats 项目规划文档
 
-> **文档状态**: ✅ Phase 1 + 1.5 已完成，Phase 2 全量完成（6/6），认证后端已部署上线（api.statstalking.com）
+> **文档状态**: ✅ Phase 1 + 1.5 已完成，Phase 2 全量完成（6/6），认证后端已部署上线（api.statstalking.com），样例数据已注入
 > **创建日期**: 2026-05-11
-> **最后更新**: 2026-06-01 16:25
-> **版本**: v3.3
+> **最后更新**: 2026-06-01 16:40
+> **版本**: v3.4
 > **负责人**: 周瑜 CPO
 
 ---
@@ -759,6 +759,7 @@ KEYBINDINGS: {
 | 2026-06-01 | v3.1 | **Phase 2 前端全量交付**：Toast公共模块抽取（toast.js）；极窄屏适配补全（≤360px断点）；球员生涯数据统计（跨比赛聚合+模态框）；球队权限系统（创建者/管理员/成员角色）；个人博客模块（发布/列表/详情/点赞/评论）；6页面SPA架构；修复dashboard.js重复加载；代码总量9,359行 | 周瑜 CPO |
 | 2026-06-01 | v3.2 | **认证后端部署完成**：Cloudflare Workers + D1 上线，hoopstats-api 部署于 workers.dev；创建 D1 数据库 hoopstats-db；users + user_data 表建表；JWT 密钥生成；5个API端点运行；auth.js API_BASE 指向 workers.dev 临时URL | 周瑜 CPO |
 | 2026-06-01 | v3.3 | **DNS & CORS 优化**：Cloudflare DNS CNAME api → workers.dev 配置完成并验证通过；auth.js API_BASE 切换为 api.statstalking.com；Worker CORS 升级为动态 Origin 匹配；部署新版 Worker v73bc894d | 周瑜 CPO |
+| 2026-06-01 | v3.4 | **样例数据注入**：新增 demo.js 模块，首次加载自动注入2支球队、14名球员、2场已完赛比赛（含逐球事件）、3篇博客文章；智能检测已有用户数据不覆盖 | 周瑜 CPO |
 
 ---
 

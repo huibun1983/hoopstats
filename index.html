@@ -929,6 +929,7 @@
   <script src="js/teams.js"></script>
   <script src="js/players.js"></script>
   <script src="js/games.js"></script>
+  <script src="js/demo.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/blog.js"></script>
   <script src="js/auth.js"></script>
@@ -966,6 +967,9 @@
 
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
+      // 首次加载：注入样例数据
+      const isNewData = DemoData.seed();
+
       // 默认显示比赛页面
       showPage('games');
 
