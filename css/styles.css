@@ -1879,6 +1879,113 @@ body {
   }
 }
 
+/* 超窄屏适配（≤360px） */
+@media (max-width: 360px) {
+  html { font-size: 13px; }
+
+  .main-content {
+    padding: var(--space-sm);
+    margin-bottom: 74px;
+  }
+
+  .page-title { font-size: 1.2rem; }
+
+  .score-value { font-size: 1.8rem; }
+  .score-bar .score-value { font-size: 1.5rem; }
+  .score-bar-timer { font-size: 1.2rem; }
+
+  .game-control-panel.compact-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xs);
+  }
+
+  .compact-grid .action-btn {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 0.6rem;
+  }
+  .compact-grid .action-btn .btn-icon { font-size: 0.9rem; }
+  .compact-grid .action-btn .btn-key { font-size: 0.55rem; padding: 1px 4px; }
+
+  .action-btn {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 0.6rem;
+    border-radius: var(--radius-sm);
+  }
+  .action-btn .btn-icon { font-size: 0.9rem; }
+  .action-btn .btn-key {
+    top: -6px; right: -6px;
+    font-size: 0.55rem; padding: 1px 4px;
+  }
+
+  .single-team-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+  }
+
+  .player-card {
+    min-height: 60px;
+    padding: 2px;
+  }
+  .player-key {
+    width: 18px; height: 18px;
+    font-size: 0.65rem;
+  }
+  .player-name { font-size: 0.6rem; max-width: 40px; }
+  .player-num { font-size: 0.6rem; }
+
+  .modal {
+    max-width: 98%;
+    margin: var(--space-xs);
+  }
+  .modal-header { padding: var(--space-sm); }
+  .modal-body { padding: var(--space-sm); }
+  .modal-title { font-size: 1rem; }
+
+  .team-selector-btn { padding: var(--space-xs) var(--space-sm); }
+  .team-selector-name { font-size: 0.85rem; }
+  .team-selector-icon { font-size: 1rem; }
+
+  .btn { padding: var(--space-sm) var(--space-sm); font-size: 0.75rem; }
+  .btn-lg { padding: var(--space-sm) var(--space-md); font-size: 0.85rem; }
+
+  .card { padding: var(--space-sm); }
+  .card-header { margin-bottom: var(--space-sm); }
+
+  .table th, .table td { padding: var(--space-xs) var(--space-sm); font-size: 0.7rem; }
+  .table-sm th, .table-sm td { padding: var(--space-xs) var(--space-sm); font-size: 0.65rem; }
+
+  .stat-value { font-size: 1.5rem; }
+  .stat-card { padding: var(--space-sm); }
+
+  .badge { padding: 2px 6px; font-size: 0.65rem; }
+
+  .tabs { gap: 0; }
+  .tab-btn { padding: var(--space-sm); font-size: 0.7rem; }
+
+  .bottom-bar { height: 52px; }
+  .bottom-bar-nav .nav-icon { font-size: 1rem; }
+  .bottom-bar-nav .nav-text { font-size: 0.6rem; }
+
+  .score-section.score-bar {
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+  }
+  .team-score-info { min-width: 32px; }
+  .shot-clock-display { font-size: 0.85rem; }
+
+  .players-grid { gap: var(--space-sm); }
+  .team-players-panel { padding: var(--space-xs); }
+
+  .lineup-selection { gap: var(--space-sm); }
+  .lineup-team { padding: var(--space-xs); }
+
+  .sub-player-item { padding: var(--space-xs) var(--space-sm); gap: var(--space-sm); }
+  .sub-player-num { width: 24px; height: 24px; font-size: 0.7rem; }
+  .sub-player-name { font-size: 0.8rem; }
+}
+
 /* ===================== 换人模态框样式 ===================== */
 .sub-modal-content {
   display: flex;
@@ -2675,4 +2782,245 @@ body {
     max-width: none !important;
     width: calc(100vw - 2 * var(--space-md));
   }
+}
+
+/* ===================== 球员生涯数据样式 ===================== */
+.career-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+.career-player-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+.career-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; font-weight: 700;
+  color: var(--accent-white);
+}
+.career-player-name {
+  font-size: 1.3rem; font-weight: 700;
+}
+.career-player-meta {
+  display: flex; gap: var(--space-sm); margin-top: var(--space-sm);
+}
+.career-summary {
+  display: flex; gap: var(--space-xl);
+}
+.career-summary-item {
+  text-align: center;
+}
+.career-summary-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2rem; font-weight: 700;
+  color: var(--accent-orange);
+}
+.career-summary-label {
+  font-size: 0.8rem; color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.career-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.career-section-title {
+  font-size: 0.85rem; font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.career-avg-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+.career-avg-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+}
+.career-avg-item.highlight {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid var(--accent-orange);
+}
+.career-avg-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.5rem; font-weight: 700;
+  color: var(--accent-orange);
+}
+.career-avg-label {
+  font-size: 0.75rem; color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.career-pct-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.career-pct-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.career-pct-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--color-success);
+}
+.career-pct-label {
+  font-size: 0.8rem; color: var(--text-dim);
+}
+
+.career-totals {
+  margin-top: var(--space-md);
+}
+.career-totals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+}
+.career-total-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  display: flex; flex-direction: column; align-items: center;
+}
+.ct-label { font-size: 0.7rem; color: var(--text-dim); }
+.ct-val { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+
+@media (max-width: 600px) {
+  .career-grid { grid-template-columns: 1fr; }
+  .career-totals-grid { grid-template-columns: repeat(3, 1fr); }
+  .career-header { flex-direction: column; gap: var(--space-md); }
+}
+
+/* ===================== 博客社区样式 ===================== */
+.blog-card {
+  cursor: pointer;
+  margin-bottom: var(--space-md);
+  transition: all var(--transition-fast);
+}
+.blog-card:hover {
+  border-color: var(--accent-orange);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.blog-card-header {
+  margin-bottom: var(--space-sm);
+}
+.blog-card-meta {
+  display: flex; align-items: center; gap: var(--space-sm);
+}
+.blog-card-title {
+  font-size: 1.15rem; font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+.blog-card-excerpt {
+  font-size: 0.9rem; color: var(--text-secondary);
+  line-height: 1.6;
+}
+.blog-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-color);
+}
+.blog-card-author {
+  display: flex; align-items: center; gap: var(--space-xs);
+}
+.blog-card-stats {
+  display: flex; gap: var(--space-md);
+}
+.blog-stat {
+  font-size: 0.85rem; color: var(--text-dim);
+}
+
+/* 博客详情 */
+.blog-detail-header {
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+.blog-detail-title {
+  font-size: 1.4rem; font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+.blog-detail-meta {
+  display: flex; align-items: center; gap: var(--space-md);
+  font-size: 0.85rem; color: var(--text-secondary);
+}
+.blog-detail-content {
+  line-height: 1.8; font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: var(--space-lg);
+}
+.blog-detail-content p {
+  margin-bottom: var(--space-md);
+}
+.blog-detail-actions {
+  display: flex; gap: var(--space-sm);
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--space-lg);
+}
+
+/* 评论区 */
+.blog-comments-section {
+  margin-top: var(--space-lg);
+}
+.blog-comments-title {
+  font-size: 0.95rem; font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+.blog-comments-list {
+  margin-bottom: var(--space-md);
+}
+.blog-comment {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+.blog-comment-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+.blog-comment-author {
+  font-weight: 600; font-size: 0.85rem;
+}
+.blog-comment-body {
+  font-size: 0.9rem; color: var(--text-secondary);
+  line-height: 1.5;
+}
+.blog-comment-form {
+  display: flex; gap: var(--space-sm); align-items: flex-end;
+}
+.blog-comment-form textarea {
+  flex: 1;
+}
+
+/* 移动端博客 */
+@media (max-width: 600px) {
+  .blog-detail-title { font-size: 1.15rem; }
+  .blog-detail-meta { flex-wrap: wrap; gap: var(--space-sm); }
+  .blog-comment-form { flex-direction: column; }
+  .blog-comment-form .btn { align-self: flex-end; }
 }

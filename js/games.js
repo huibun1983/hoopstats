@@ -200,7 +200,7 @@ const GameManager = {
     this.updateTeamSelector();
     this.updateTeamSelectorDisplay();
     this.renderPlayerGrid(); // 重新渲染球员网格
-    this.showToast(`已切换到${side === 'home' ? '主队' : '客队'}`, 'info');
+    Toast.show(`已切换到${side === 'home' ? '主队' : '客队'}`, 'info');
   },
 
   /**
@@ -212,7 +212,7 @@ const GameManager = {
     this.updateTeamSelector();
     this.updateTeamSelectorDisplay();
     this.renderPlayerGrid(); // 重新渲染球员网格
-    this.showToast(`已切换到${this.currentTeam === 'home' ? '主队' : '客队'}`, 'info');
+    Toast.show(`已切换到${this.currentTeam === 'home' ? '主队' : '客队'}`, 'info');
   },
 
   /**
@@ -358,7 +358,7 @@ const GameManager = {
     const teams = DB.getTeams();
 
     if (teams.length < 2) {
-      this.showToast('需要至少2支球队才能创建比赛', 'error');
+      Toast.show('需要至少2支球队才能创建比赛', 'error');
       return;
     }
 
@@ -488,7 +488,7 @@ const GameManager = {
     } else {
       // 选择（最多5人首发）
       if (this.lineupSelection[side].length >= 5) {
-        this.showToast('首发阵容最多5人', 'warning');
+        Toast.show('首发阵容最多5人', 'warning');
         return;
       }
       this.lineupSelection[side].push(playerId);
@@ -534,7 +534,7 @@ const GameManager = {
     const shotClockSeconds = parseInt(document.getElementById('game-shot-clock')?.value || '24');
 
     if (homeTeamId === awayTeamId) {
-      this.showToast('主队和客队不能相同', 'error');
+      Toast.show('主队和客队不能相同', 'error');
       return;
     }
 
@@ -543,12 +543,12 @@ const GameManager = {
     const awayStarters = this.lineupSelection.away || [];
 
     if (homeStarters.length === 0) {
-      this.showToast('请选择主队首发阵容', 'error');
+      Toast.show('请选择主队首发阵容', 'error');
       return;
     }
 
     if (awayStarters.length === 0) {
-      this.showToast('请选择客队首发阵容', 'error');
+      Toast.show('请选择客队首发阵容', 'error');
       return;
     }
 
@@ -595,7 +595,7 @@ const GameManager = {
 
     const created = DB.addGame(game);
     if (created) {
-      this.showToast('比赛创建成功', 'success');
+      Toast.show('比赛创建成功', 'success');
       this.closeModal();
 
       // 直接进入比赛
@@ -777,7 +777,7 @@ const GameManager = {
     });
 
     const playerName = player?.name || '未知';
-    this.showToast(`已选 ${playerName}`, 'info');
+    Toast.show(`已选 ${playerName}`, 'info');
   },
 
   /**
@@ -813,7 +813,7 @@ const GameManager = {
     if (selectedPlayer) {
       this.selectPlayer(selectedPlayer.id, this.currentTeam);
     } else {
-      this.showToast(`键 ${key} 无对应球员`, 'warning');
+      Toast.show(`键 ${key} 无对应球员`, 'warning');
     }
   },
 
@@ -830,7 +830,7 @@ const GameManager = {
     const onBench = players.filter(p => !p.onCourt);
 
     if (onCourt.length === 0 || onBench.length === 0) {
-      this.showToast('无法换人：场上或替补无人', 'warning');
+      Toast.show('无法换人：场上或替补无人', 'warning');
       return;
     }
 
@@ -946,7 +946,7 @@ const GameManager = {
    */
   confirmSubstitution() {
     if (!this.subSelection.out || !this.subSelection.in) {
-      this.showToast('请选择离场和入场球员', 'warning');
+      Toast.show('请选择离场和入场球员', 'warning');
       return;
     }
 
@@ -959,7 +959,7 @@ const GameManager = {
     const playerIn = players.find(p => p.id === this.subSelection.in);
 
     if (!playerOut || !playerIn) {
-      this.showToast('球员选择错误', 'error');
+      Toast.show('球员选择错误', 'error');
       return;
     }
 
@@ -971,7 +971,7 @@ const GameManager = {
     // 记录事件
     this.addEvent(team, null, `换人 ${playerOut.name} → ${playerIn.name}`, '🔄', 'info');
 
-    this.showToast(`换人: ${playerOut.name} → ${playerIn.name}`, 'success');
+    Toast.show(`换人: ${playerOut.name} → ${playerIn.name}`, 'success');
 
     this.closeSubModal();
     this.renderPlayerGrid();
@@ -1156,7 +1156,7 @@ const GameManager = {
    * 进攻时钟归零处理
    */
   onShotClockExpired() {
-    this.showToast('⏱ 进攻时钟归零！', 'warning');
+    Toast.show('⏱ 进攻时钟归零！', 'warning');
     // 自动重置为24秒（等待裁判处理）
     this.resetShotClock();
   },
@@ -1246,7 +1246,7 @@ const GameManager = {
     this.resetShotClock();
 
     // 重置暂停次数（每节新暂停机会）
-    this.showToast(`第 ${this.period} 节开始`, 'info');
+    Toast.show(`第 ${this.period} 节开始`, 'info');
     this.updateDisplay();
   },
 
@@ -1278,7 +1278,7 @@ const GameManager = {
     this.isPaused = !this.isPaused;
 
     this.updateDisplay();
-    this.showToast(this.isPaused ? '比赛已暂停' : '比赛已恢复', 'info');
+    Toast.show(this.isPaused ? '比赛已暂停' : '比赛已恢复', 'info');
 
     // 更新数据库
     DB.updateGame(this.currentGame.id, {
@@ -1291,12 +1291,12 @@ const GameManager = {
    */
   recordAction(action) {
     if (!this.currentGame) {
-      this.showToast('请先创建或选择比赛', 'error');
+      Toast.show('请先创建或选择比赛', 'error');
       return;
     }
 
     if (!this.currentPlayer && ['reb', 'ast', 'stl', 'blk', 'tov', 'foul'].includes(action)) {
-      this.showToast('请先选择球员', 'error');
+      Toast.show('请先选择球员', 'error');
       return;
     }
 
@@ -1426,7 +1426,7 @@ const GameManager = {
    */
   undoLastAction() {
     if (this.eventHistory.length === 0) {
-      this.showToast('没有可撤销的动作', 'warning');
+      Toast.show('没有可撤销的动作', 'warning');
       return;
     }
 
@@ -1461,7 +1461,7 @@ const GameManager = {
       events: this.currentGame.events
     });
 
-    this.showToast(`已撤销: ${lastEvent.action}`, 'info');
+    Toast.show(`已撤销: ${lastEvent.action}`, 'info');
   },
 
   /**
@@ -1515,13 +1515,13 @@ const GameManager = {
   requestTimeout() {
     const team = this.currentTeam;
     if (this.teamResources[team].timeouts <= 0) {
-      this.showToast('本队已无暂停机会', 'warning');
+      Toast.show('本队已无暂停机会', 'warning');
       return;
     }
 
     this.teamResources[team].timeouts--;
     const teamLabel = team === 'home' ? '主队' : '客队';
-    this.showToast(`${teamLabel}暂停 (剩余 ${this.teamResources[team].timeouts} 次)`, 'info');
+    Toast.show(`${teamLabel}暂停 (剩余 ${this.teamResources[team].timeouts} 次)`, 'info');
     this.updateControlButtons();
     this.updateTimeoutsDisplay(); // 实时刷新比分横条暂停次数
 
@@ -1582,7 +1582,7 @@ const GameManager = {
     }
 
     this.currentGame = null;
-    this.showToast('比赛已结束', 'success');
+    Toast.show('比赛已结束', 'success');
 
     document.getElementById('page-score').classList.add('hidden');
     document.getElementById('page-games').classList.remove('hidden');
@@ -1619,7 +1619,7 @@ const GameManager = {
     if (!confirm('确定要删除这场比赛记录吗？')) return;
 
     if (DB.deleteGame(id)) {
-      this.showToast('比赛已删除', 'success');
+      Toast.show('比赛已删除', 'success');
       this.render();
     }
   },
@@ -1631,32 +1631,6 @@ const GameManager = {
     document.getElementById('game-modal').classList.remove('active');
     // 重置阵容选择
     this.lineupSelection = { home: [], away: [] };
-  },
-
-  /**
-   * 显示 Toast 通知
-   */
-  showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container') || this.createToastContainer();
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
-      <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</span>
-      <span>${message}</span>
-    `;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-  },
-
-  /**
-   * 创建 Toast 容器
-   */
-  createToastContainer() {
-    const container = document.createElement('div');
-    container.id = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-    return container;
   },
 
   // ==================== 比赛数据统计面板 ====================

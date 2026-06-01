@@ -45,6 +45,12 @@
             <span class="nav-text">数据看板</span>
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" onclick="showPage('blog')" id="nav-blog">
+            <span class="nav-icon">📝</span>
+            <span class="nav-text">社区</span>
+          </a>
+        </li>
       </ul>
     </nav>
     <div class="topbar-user" id="nav-user-area">
@@ -78,6 +84,12 @@
         <a class="nav-link" onclick="showPage('dashboard')" id="bottom-nav-dashboard">
           <span class="nav-icon">📊</span>
           <span class="nav-text">看板</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onclick="showPage('blog')" id="bottom-nav-blog">
+          <span class="nav-icon">📝</span>
+          <span class="nav-text">社区</span>
         </a>
       </li>
       <li class="nav-item" id="bottom-nav-user-area">
@@ -503,6 +515,20 @@
       </section>
     </section>
 
+    <!-- 博客页面 -->
+    <section id="page-blog" class="page hidden">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-md);">
+        <div>
+          <h1 class="page-title">📝 篮球社区</h1>
+          <p class="page-subtitle">分享心得、战报与技巧</p>
+        </div>
+        <button class="btn btn-primary" onclick="BlogManager.showCreateModal()">
+          <span>✍️</span> 写文章
+        </button>
+      </div>
+      <div id="blog-list"></div>
+    </section>
+
   </main>
 
   <!-- ==================== 模态框 ==================== -->
@@ -838,17 +864,74 @@
     </div>
   </div>
 
+  <!-- 球员生涯数据模态框 -->
+  <div class="modal-overlay" id="career-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">🏀 球员生涯数据</h2>
+        <button class="modal-close" onclick="PlayerManager.closeCareerModal()">✕</button>
+      </div>
+      <div class="modal-body" id="career-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- 博客发表模态框 -->
+  <div class="modal-overlay" id="blog-create-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">✍️ 写文章</h3>
+        <button class="modal-close" onclick="BlogManager.closeCreateModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="blog-form">
+          <div class="form-group">
+            <label class="form-label">文章标题 *</label>
+            <input type="text" id="blog-title" class="form-input" placeholder="给你的文章起个标题..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">分类</label>
+            <select id="blog-category" class="form-input form-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">作者昵称</label>
+            <input type="text" id="blog-author" class="form-input" placeholder="你的显示名称">
+          </div>
+          <div class="form-group">
+            <label class="form-label">文章内容 *</label>
+            <textarea id="blog-content" class="form-input form-textarea" rows="10" placeholder="写下你的篮球故事..." required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="BlogManager.closeCreateModal()">取消</button>
+        <button class="btn btn-primary" onclick="BlogManager.savePost(event)">发表</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 博客详情模态框 -->
+  <div class="modal-overlay" id="blog-detail-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">📖 文章详情</h3>
+        <button class="modal-close" onclick="BlogManager.closeDetail()">✕</button>
+      </div>
+      <div class="modal-body" id="blog-detail-body"></div>
+    </div>
+  </div>
+
   <!-- Toast 容器 -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- 脚本 -->
+  <!-- 脚本：toast 和 db 最先加载，模块按依赖顺序 -->
+  <script src="js/toast.js"></script>
   <script src="js/db.js"></script>
   <script src="js/teams.js"></script>
   <script src="js/players.js"></script>
   <script src="js/games.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/blog.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/dashboard.js"></script>
   <script>
     // 页面导航
     function showPage(page) {
@@ -873,6 +956,7 @@
       if (page === 'teams')   TeamManager.render();
       if (page === 'players') PlayerManager.render();
       if (page === 'games')   GameManager.render();
+      if (page === 'blog')    BlogManager.render();
       if (page === 'dashboard') {
         if (typeof Dashboard !== 'undefined' && typeof Dashboard.init === 'function') {
           Dashboard.init();

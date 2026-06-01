@@ -102,6 +102,9 @@ const PlayerManager = {
                   </td>
                   <td>
                     <div class="flex gap-sm">
+                      <button class="btn btn-ghost btn-sm" onclick="PlayerManager.showCareerModal('${player.id}')">
+                        📊 生涯
+                      </button>
                       <button class="btn btn-ghost btn-sm" onclick="PlayerManager.showEditModal('${player.id}')">
                         ✏️ 编辑
                       </button>
@@ -223,12 +226,12 @@ const PlayerManager = {
     };
 
     if (!playerData.name) {
-      this.showToast('请输入球员姓名', 'error');
+      Toast.show('请输入球员姓名', 'error');
       return;
     }
 
     if (!playerData.teamId) {
-      this.showToast('请选择所属球队', 'error');
+      Toast.show('请选择所属球队', 'error');
       return;
     }
 
@@ -238,12 +241,12 @@ const PlayerManager = {
     if (playerId) {
       const updated = DB.updatePlayer(playerId, playerData);
       if (updated) {
-        this.showToast('球员信息已更新', 'success');
+        Toast.show('球员信息已更新', 'success');
       }
     } else {
       const created = DB.addPlayer(playerData);
       if (created) {
-        this.showToast('球员添加成功', 'success');
+        Toast.show('球员添加成功', 'success');
       }
     }
 
@@ -258,7 +261,7 @@ const PlayerManager = {
     if (!confirm('确定要删除这名球员吗？')) return;
 
     if (DB.deletePlayer(id)) {
-      this.showToast('球员已删除', 'success');
+      Toast.show('球员已删除', 'success');
       this.render();
     }
   },
@@ -271,29 +274,182 @@ const PlayerManager = {
   },
 
   /**
-   * 显示 Toast 通知
+   * 获取球员生涯统计数据（跨所有已结束比赛）
    */
-  showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container') || this.createToastContainer();
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
-      <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
-      <span>${message}</span>
-    `;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+  getPlayerCareerStats(playerId) {
+    const games = DB.getGames().filter(g => g.status === 'ended');
+    const totals = {
+      gamesPlayed: 0, pts: 0, fgm: 0, fga: 0, fg3m: 0, fg3a: 0,
+      ftm: 0, fta: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, pf: 0
+    };
+
+    games.forEach(game => {
+      const player = game.homePlayers?.find(p => p.id === playerId) ||
+                     game.awayPlayers?.find(p => p.id === playerId);
+      if (!player) return;
+
+      const side = game.homePlayers?.find(p => p.id === playerId) ? 'home' : 'away';
+      const teamEvents = game.events.filter(e => e.team === side && e.playerId === playerId);
+      if (teamEvents.length === 0) return;
+
+      totals.gamesPlayed++;
+
+      teamEvents.forEach(e => {
+        switch (e.action) {
+          case '两分命中': totals.pts += 2; totals.fgm++; totals.fga++; break;
+          case '两分不中': totals.fga++; break;
+          case '三分命中': totals.pts += 3; totals.fg3m++; totals.fg3a++; break;
+          case '三分不中': totals.fg3a++; break;
+          case '罚球命中': totals.pts += 1; totals.ftm++; totals.fta++; break;
+          case '罚球不中': totals.fta++; break;
+          case '篮板': totals.reb++; break;
+          case '助攻': totals.ast++; break;
+          case '抢断': totals.stl++; break;
+          case '盖帽': totals.blk++; break;
+          case '失误': totals.tov++; break;
+          case '犯规': totals.pf++; break;
+        }
+      });
+    });
+
+    if (totals.gamesPlayed === 0) return null;
+
+    const g = totals.gamesPlayed;
+    const calcPct = (made, att) => att > 0 ? (made / att * 100).toFixed(1) + '%' : '-';
+
+    return {
+      ...totals,
+      ppg: (totals.pts / g).toFixed(1),
+      rpg: (totals.reb / g).toFixed(1),
+      apg: (totals.ast / g).toFixed(1),
+      spg: (totals.stl / g).toFixed(1),
+      bpg: (totals.blk / g).toFixed(1),
+      fgPct: calcPct(totals.fgm, totals.fga),
+      fg3Pct: calcPct(totals.fg3m, totals.fg3a),
+      ftPct: calcPct(totals.ftm, totals.fta)
+    };
   },
 
   /**
-   * 创建 Toast 容器
+   * 显示球员生涯统计模态框
    */
-  createToastContainer() {
-    const container = document.createElement('div');
-    container.id = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-    return container;
+  showCareerModal(playerId) {
+    const player = DB.getPlayers().find(p => p.id === playerId);
+    if (!player) return;
+
+    const stats = this.getPlayerCareerStats(playerId);
+    const teams = DB.getTeams();
+    const team = teams.find(t => t.id === player.teamId);
+
+    // 如果没有数据，显示空状态
+    if (!stats) {
+      this._showCareerEmpty(player, team);
+      return;
+    }
+
+    let html = `
+      <div class="career-header">
+        <div class="career-player-info">
+          <div class="career-avatar" style="background:${player.color || '#4895EF'}">
+            ${player.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div class="career-player-name">${player.name}</div>
+            <div class="career-player-meta">
+              <span class="badge">#${player.number || '-'}</span>
+              <span class="badge badge-info">${player.position || '-'}</span>
+              <span class="badge">${team ? team.icon + ' ' + team.name : '未分配'}</span>
+            </div>
+          </div>
+        </div>
+        <div class="career-summary">
+          <div class="career-summary-item">
+            <div class="career-summary-val">${stats.gamesPlayed}</div>
+            <div class="career-summary-label">出场</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="career-grid">
+        <div class="career-section">
+          <div class="career-section-title">📊 场均数据</div>
+          <div class="career-avg-grid">
+            <div class="career-avg-item highlight"><div class="career-avg-val">${stats.ppg}</div><div class="career-avg-label">得分</div></div>
+            <div class="career-avg-item"><div class="career-avg-val">${stats.rpg}</div><div class="career-avg-label">篮板</div></div>
+            <div class="career-avg-item"><div class="career-avg-val">${stats.apg}</div><div class="career-avg-label">助攻</div></div>
+            <div class="career-avg-item"><div class="career-avg-val">${stats.spg}</div><div class="career-avg-label">抢断</div></div>
+            <div class="career-avg-item"><div class="career-avg-val">${stats.bpg}</div><div class="career-avg-label">盖帽</div></div>
+          </div>
+        </div>
+
+        <div class="career-section">
+          <div class="career-section-title">🎯 命中率</div>
+          <div class="career-pct-grid">
+            <div class="career-pct-item">
+              <div class="career-pct-val">${stats.fgPct}</div>
+              <div class="career-pct-label">投篮 ${stats.fgm}/${stats.fga}</div>
+            </div>
+            <div class="career-pct-item">
+              <div class="career-pct-val">${stats.fg3Pct}</div>
+              <div class="career-pct-label">三分 ${stats.fg3m}/${stats.fg3a}</div>
+            </div>
+            <div class="career-pct-item">
+              <div class="career-pct-val">${stats.ftPct}</div>
+              <div class="career-pct-label">罚球 ${stats.ftm}/${stats.fta}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="career-totals">
+        <div class="career-section-title">📋 生涯总计</div>
+        <div class="career-totals-grid">
+          <div class="career-total-item"><span class="ct-label">总得分</span><span class="ct-val">${stats.pts}</span></div>
+          <div class="career-total-item"><span class="ct-label">总篮板</span><span class="ct-val">${stats.reb}</span></div>
+          <div class="career-total-item"><span class="ct-label">总助攻</span><span class="ct-val">${stats.ast}</span></div>
+          <div class="career-total-item"><span class="ct-label">总抢断</span><span class="ct-val">${stats.stl}</span></div>
+          <div class="career-total-item"><span class="ct-label">总盖帽</span><span class="ct-val">${stats.blk}</span></div>
+          <div class="career-total-item"><span class="ct-label">总失误</span><span class="ct-val">${stats.tov}</span></div>
+          <div class="career-total-item"><span class="ct-label">总犯规</span><span class="ct-val">${stats.pf}</span></div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('career-modal-body').innerHTML = html;
+    document.getElementById('career-modal').classList.add('active');
+  },
+
+  /**
+   * 显示无生涯数据空状态
+   */
+  _showCareerEmpty(player, team) {
+    document.getElementById('career-modal-body').innerHTML = `
+      <div class="career-header">
+        <div class="career-player-info">
+          <div class="career-avatar" style="background:${player.color || '#4895EF'}">
+            ${player.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div class="career-player-name">${player.name}</div>
+            <div class="career-player-meta">
+              <span class="badge">#${player.number || '-'}</span>
+              <span class="badge badge-info">${player.position || '-'}</span>
+              <span class="badge">${team ? team.icon + ' ' + team.name : '未分配'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="empty-state" style="padding:var(--space-xl);">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">暂无生涯数据</div>
+        <div class="empty-desc">该球员尚未参与任何已结束的比赛</div>
+      </div>
+    `;
+    document.getElementById('career-modal').classList.add('active');
+  },
+
+  closeCareerModal() {
+    document.getElementById('career-modal').classList.remove('active');
   },
 
   /**
@@ -518,7 +674,7 @@ const PlayerManager = {
     const previewData = form.dataset.preview;
 
     if (!previewData) {
-      this.showToast('请先预览数据', 'error');
+      Toast.show('请先预览数据', 'error');
       return;
     }
 
@@ -540,7 +696,7 @@ const PlayerManager = {
     });
 
     this.closeBatchImportModal();
-    this.showToast(`成功导入 ${successCount} 名球员${skipCount > 0 ? `，跳过 ${skipCount} 条` : ''}`, successCount > 0 ? 'success' : 'warning');
+    Toast.show(`成功导入 ${successCount} 名球员${skipCount > 0 ? `，跳过 ${skipCount} 条` : ''}`, successCount > 0 ? 'success' : 'warning');
     this.render();
   },
 
@@ -553,7 +709,7 @@ const PlayerManager = {
     if (!file) return;
 
     if (!file.name.endsWith('.csv') && !file.type.includes('csv')) {
-      this.showToast('请上传 CSV 格式文件', 'error');
+      Toast.show('请上传 CSV 格式文件', 'error');
       fileInput.value = '';
       return;
     }
@@ -574,7 +730,7 @@ const PlayerManager = {
       fileInput.value = '';
     };
     reader.onerror = () => {
-      this.showToast('文件读取失败', 'error');
+      Toast.show('文件读取失败', 'error');
       fileInput.value = '';
     };
     reader.readAsText(file);
@@ -588,7 +744,7 @@ const PlayerManager = {
     const teams = DB.getTeams();
 
     if (players.length === 0) {
-      this.showToast('暂无球员数据可导出', 'error');
+      Toast.show('暂无球员数据可导出', 'error');
       return;
     }
 
@@ -626,7 +782,7 @@ const PlayerManager = {
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
 
-    this.showToast(`已导出 ${players.length} 名球员`, 'success');
+    Toast.show(`已导出 ${players.length} 名球员`, 'success');
   },
 
   /**
@@ -653,7 +809,7 @@ const PlayerManager = {
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
 
-    this.showToast('模板已下载', 'success');
+    Toast.show('模板已下载', 'success');
   },
 
   /**

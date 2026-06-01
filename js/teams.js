@@ -38,25 +38,34 @@ const TeamManager = {
       return;
     }
 
-    container.innerHTML = teams.map(team => `
+    container.innerHTML = teams.map(team => {
+      const role = this.getUserRole(team);
+      const roleBadge = role === 'creator' ? '<span class="badge badge-info">👑 队长</span>' :
+                        role === 'admin' ? '<span class="badge badge-success">⭐ 管理员</span>' :
+                        role === 'member' ? '<span class="badge">👤 成员</span>' : '';
+
+      const canEditTeam = this.canEdit(team);
+      const canDeleteTeam = this.canDelete(team);
+
+      return `
       <div class="card" data-team-id="${team.id}">
         <div class="card-header">
           <div class="flex items-center gap-md">
             <span style="font-size:2rem;">${team.icon || '🏀'}</span>
             <div>
-              <div class="card-title">${team.name}</div>
+              <div class="card-title">${team.name} ${roleBadge}</div>
               <div class="text-secondary" style="font-size:0.85rem;">
                 ${DB.getPlayersByTeam(team.id).length} 名球员 · ${team.city || '未设置城市'}
               </div>
             </div>
           </div>
           <div class="flex gap-sm">
-            <button class="btn btn-ghost btn-icon" onclick="TeamManager.showEditModal('${team.id}')" title="编辑">
+            ${canEditTeam ? `<button class="btn btn-ghost btn-icon" onclick="TeamManager.showEditModal('${team.id}')" title="编辑">
               ✏️
-            </button>
-            <button class="btn btn-ghost btn-icon" onclick="TeamManager.deleteTeam('${team.id}')" title="删除">
+            </button>` : ''}
+            ${canDeleteTeam ? `<button class="btn btn-ghost btn-icon" onclick="TeamManager.deleteTeam('${team.id}')" title="删除">
               🗑️
-            </button>
+            </button>` : ''}
           </div>
         </div>
         <div class="mt-md">
@@ -68,7 +77,7 @@ const TeamManager = {
           </div>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   },
 
   /**
@@ -119,6 +128,44 @@ const TeamManager = {
   },
 
   /**
+   * 获取当前用户ID（从Auth模块）
+   */
+  getCurrentUserId() {
+    if (typeof Auth !== 'undefined' && Auth.getUser()) {
+      return Auth.getUser().id;
+    }
+    return null;
+  },
+
+  /**
+   * 获取用户在球队中的角色
+   * @returns {'creator'|'admin'|'member'|'anonymous'}
+   */
+  getUserRole(team) {
+    const userId = this.getCurrentUserId();
+    if (!userId) return 'anonymous';
+    if (team.creatorId === userId) return 'creator';
+    if (team.admins && team.admins.includes(userId)) return 'admin';
+    return 'member';
+  },
+
+  /**
+   * 检查用户是否可以编辑球队
+   */
+  canEdit(team) {
+    const role = this.getUserRole(team);
+    return role === 'anonymous' || role === 'creator' || role === 'admin';
+  },
+
+  /**
+   * 检查用户是否可以删除球队
+   */
+  canDelete(team) {
+    const role = this.getUserRole(team);
+    return role === 'anonymous' || role === 'creator';
+  },
+
+  /**
    * 保存球队
    */
   saveTeam(e) {
@@ -140,21 +187,29 @@ const TeamManager = {
     teamData.colorName = selectedColor ? selectedColor.name : '默认';
 
     if (!teamData.name) {
-      this.showToast('请输入球队名称', 'error');
+      Toast.show('请输入球队名称', 'error');
       return;
     }
 
     if (teamId) {
-      // 更新
+      // 权限检查
+      const team = DB.getTeams().find(t => t.id === teamId);
+      if (!this.canEdit(team)) {
+        Toast.show('无权限编辑此球队', 'error');
+        return;
+      }
       const updated = DB.updateTeam(teamId, teamData);
       if (updated) {
-        this.showToast('球队更新成功', 'success');
+        Toast.show('球队更新成功', 'success');
       }
     } else {
-      // 创建
+      // 创建时记录创建者
+      const userId = this.getCurrentUserId();
+      if (userId) teamData.creatorId = userId;
+      teamData.admins = [];
       const created = DB.addTeam(teamData);
       if (created) {
-        this.showToast('球队创建成功', 'success');
+        Toast.show('球队创建成功', 'success');
       }
     }
 
@@ -166,6 +221,11 @@ const TeamManager = {
    * 删除球队
    */
   deleteTeam(id) {
+    const team = DB.getTeams().find(t => t.id === id);
+    if (!this.canDelete(team)) {
+      Toast.show('仅队长可删除球队', 'error');
+      return;
+    }
     if (!confirm('确定要删除这支球队吗？球队下的球员也会被删除。')) return;
 
     // 删除球队下的球员
@@ -174,7 +234,7 @@ const TeamManager = {
 
     // 删除球队
     if (DB.deleteTeam(id)) {
-      this.showToast('球队已删除', 'success');
+      Toast.show('球队已删除', 'success');
       this.render();
     }
   },
@@ -186,31 +246,6 @@ const TeamManager = {
     document.getElementById('team-modal').classList.remove('active');
   },
 
-  /**
-   * 显示 Toast 通知
-   */
-  showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container') || this.createToastContainer();
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
-      <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
-      <span>${message}</span>
-    `;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-  },
-
-  /**
-   * 创建 Toast 容器
-   */
-  createToastContainer() {
-    const container = document.createElement('div');
-    container.id = 'toast-container';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-    return container;
-  }
 };
 
 // 导出
