@@ -185,7 +185,7 @@ const GameManager = {
         this.requestSubstitution();
         break;
       default:
-        this.recordAction(action);
+        this.recordAction(action, 'keyboard');
     }
   },
 
@@ -1289,7 +1289,7 @@ const GameManager = {
   /**
    * 记录动作
    */
-  recordAction(action) {
+  recordAction(action, source = 'keyboard') {
     if (!this.currentGame) {
       Toast.show('请先创建或选择比赛', 'error');
       return;
@@ -1321,55 +1321,55 @@ const GameManager = {
         scoreDelta = 2;
         if (team === 'home') this.currentGame.homeScore += 2;
         else this.currentGame.awayScore += 2;
-        this.addEvent(team, player, '2分命中', '+2分', 'success');
+        this.addEvent(team, player, '2分命中', '+2分', 'success', source);
         this.resetShotClock(); // 得分后重置进攻时钟
         break;
       case 'fg3m':
         scoreDelta = 3;
         if (team === 'home') this.currentGame.homeScore += 3;
         else this.currentGame.awayScore += 3;
-        this.addEvent(team, player, '3分命中', '+3分', 'success');
+        this.addEvent(team, player, '3分命中', '+3分', 'success', source);
         this.resetShotClock(); // 得分后重置进攻时钟
         break;
       case 'ftm':
         scoreDelta = 1;
         if (team === 'home') this.currentGame.homeScore += 1;
         else this.currentGame.awayScore += 1;
-        this.addEvent(team, player, '罚球命中', '+1分', 'success');
+        this.addEvent(team, player, '罚球命中', '+1分', 'success', source);
         this.resetShotClock(); // 得分后重置进攻时钟
         break;
       case 'fg2x':
-        this.addEvent(team, player, '2分不中', 'MISS', 'danger');
+        this.addEvent(team, player, '2分不中', 'MISS', 'danger', source);
         break;
       case 'fg3x':
-        this.addEvent(team, player, '3分不中', 'MISS', 'danger');
+        this.addEvent(team, player, '3分不中', 'MISS', 'danger', source);
         break;
       case 'ftx':
-        this.addEvent(team, player, '罚球不中', 'MISS', 'danger');
+        this.addEvent(team, player, '罚球不中', 'MISS', 'danger', source);
         break;
       case 'reb':
-        this.addEvent(team, player, '篮板', '📊', 'info');
+        this.addEvent(team, player, '篮板', '📊', 'info', source);
         break;
       case 'ast':
-        this.addEvent(team, player, '助攻', '🎯', 'info');
+        this.addEvent(team, player, '助攻', '🎯', 'info', source);
         break;
       case 'stl':
-        this.addEvent(team, player, '抢断', '✋', 'warning');
+        this.addEvent(team, player, '抢断', '✋', 'warning', source);
         this.resetShotClock(); // 换球权后重置进攻时钟
         break;
       case 'blk':
-        this.addEvent(team, player, '盖帽', '🛡', 'info');
+        this.addEvent(team, player, '盖帽', '🛡', 'info', source);
         break;
       case 'tov':
-        this.addEvent(team, player, '失误', '❌', 'warning');
+        this.addEvent(team, player, '失误', '❌', 'warning', source);
         this.resetShotClock(); // 换球权后重置进攻时钟
         break;
       case 'foul':
-        this.addEvent(team, player, '犯规', '🚨', 'danger');
+        this.addEvent(team, player, '犯规', '🚨', 'danger', source);
         this.updateTeamFoulDisplay(); // 更新犯规计数显示
         break;
       case 'highlight':
-        this.addEvent(team, player, '精彩时刻', '⭐', 'warning');
+        this.addEvent(team, player, '精彩时刻', '⭐', 'warning', source);
         break;
     }
 
@@ -1400,7 +1400,7 @@ const GameManager = {
   /**
    * 添加事件记录
    */
-  addEvent(team, player, action, symbol, colorClass) {
+  addEvent(team, player, action, symbol, colorClass, source = 'keyboard') {
     const event = {
       id: Date.now(),
       team,
@@ -1409,6 +1409,7 @@ const GameManager = {
       action,
       symbol,
       colorClass,
+      source,
       timer: this.gameTimer,
       period: this.period,
       timestamp: new Date().toISOString()
@@ -1465,21 +1466,78 @@ const GameManager = {
   },
 
   /**
-   * 渲染事件列表
+   * 渲染事件列表 + 最新事件确认卡
    */
   renderEvents() {
     const container = document.getElementById('event-list');
     if (!container || !this.currentGame.events) return;
 
-    const events = this.currentGame.events.slice(-20).reverse();
-    container.innerHTML = events.map(e => `
-      <div class="event-item">
-        <span class="event-timer">${Math.floor(e.timer / 60)}:${(e.timer % 60).toString().padStart(2, '0')}</span>
-        <span class="event-team badge badge-${e.colorClass}">${e.team === 'home' ? '主' : '客'}</span>
-        <span class="event-player">${e.playerName || ''}</span>
-        <span class="event-action">${e.symbol} ${e.action}</span>
-      </div>
-    `).join('');
+    const events = this.currentGame.events;
+    const hasEvents = events.length > 0;
+
+    // 确认卡数据：取最新一条
+    const latest = hasEvents ? events[events.length - 1] : null;
+
+    // 事件列表项（最近20条，倒序）
+    const recentEvents = events.slice(-20).reverse();
+
+    let html = '';
+
+    // 最新事件确认卡
+    if (latest) {
+      const sourceIcon = latest.source === 'voice' ? '🎤' : '⌨️';
+      const sourceLabel = latest.source === 'voice' ? '语音' : '键盘';
+      const playerStr = latest.playerName ? `#${latest.playerName}` : '';
+      const teamLabel = latest.team === 'home' ? '主' : '客';
+      html += `
+      <div class="event-confirm-card" id="event-confirm-card">
+        <div class="confirm-card-inner">
+          <span class="confirm-source">${sourceIcon}</span>
+          <span class="confirm-team badge badge-${latest.colorClass}">${teamLabel}</span>
+          <span class="confirm-player">${playerStr}</span>
+          <span class="confirm-action">${latest.symbol} ${latest.action}</span>
+          <span class="confirm-time">${Math.floor(latest.timer / 60)}:${(latest.timer % 60).toString().padStart(2, '0')} Q${latest.period}</span>
+          <span class="confirm-check">✅</span>
+        </div>
+        <div class="confirm-bar"></div>
+      </div>`;
+    } else {
+      html += `<div class="event-confirm-card event-confirm-empty">等待事件录入...</div>`;
+    }
+
+    // 事件列表
+    html += '<div class="event-list-inner">';
+    if (recentEvents.length === 0) {
+      html += '<div class="event-empty">暂无事件记录</div>';
+    } else {
+      recentEvents.forEach((e, i) => {
+        const isLatest = (i === 0); // 最新一条（倒序排列第一个）
+        const sourceIcon = e.source === 'voice' ? '🎤' : '⌨️';
+        const playerStr = e.playerName || '';
+        const teamLabel = e.team === 'home' ? '主' : '客';
+        html += `
+        <div class="event-item${isLatest ? ' event-newest' : ''}">
+          <span class="event-source" title="${e.source === 'voice' ? '语音录入' : '键盘录入'}">${sourceIcon}</span>
+          <span class="event-timer">${Math.floor(e.timer / 60)}:${(e.timer % 60).toString().padStart(2, '0')}</span>
+          <span class="event-team badge badge-${e.colorClass}">${teamLabel}</span>
+          <span class="event-player">${playerStr}</span>
+          <span class="event-action">${e.symbol} ${e.action}</span>
+        </div>`;
+      });
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    // 新事件闪入确认卡动画
+    if (latest && latest.source) {
+      const confirmCard = document.getElementById('event-confirm-card');
+      if (confirmCard) {
+        confirmCard.classList.remove('event-slide-in');
+        void confirmCard.offsetWidth; // trigger reflow
+        confirmCard.classList.add('event-slide-in');
+      }
+    }
   },
 
   /**

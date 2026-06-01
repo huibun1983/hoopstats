@@ -3024,3 +3024,274 @@ body {
   .blog-comment-form { flex-direction: column; }
   .blog-comment-form .btn { align-self: flex-end; }
 }
+
+/* ==================== 语音按钮 ==================== */
+#voice-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: rgba(20, 20, 30, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#voice-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+}
+
+#voice-btn:active {
+  transform: scale(0.95);
+}
+
+/* 监听中状态 */
+#voice-btn.state-listening {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  animation: voice-pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+/* 识别中状态 */
+#voice-btn.state-processing {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  animation: voice-spin 1s linear infinite;
+}
+
+/* 不支持的灰色状态 */
+#voice-btn.unsupported {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--color-border);
+  color: var(--text-tertiary);
+}
+
+#voice-btn.hidden {
+  display: none;
+}
+
+@keyframes voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+}
+
+@keyframes voice-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 语音提示 tooltip */
+#voice-tooltip {
+  position: fixed;
+  bottom: 96px;
+  right: 16px;
+  z-index: 998;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#voice-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==================== 事件日志增强 ==================== */
+
+/* 最新事件确认卡 */
+.event-confirm-card {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  overflow: hidden;
+}
+
+.event-confirm-empty {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.confirm-card-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+}
+
+.confirm-source {
+  font-size: 1rem;
+}
+
+.confirm-team {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+}
+
+.confirm-player {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirm-action {
+  color: var(--text-secondary);
+}
+
+.confirm-time {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-family: 'Barlow Condensed', monospace;
+}
+
+.confirm-check {
+  font-size: 1rem;
+}
+
+/* 确认卡进度条（2s消失倒计时） */
+.confirm-bar {
+  height: 2px;
+  background: var(--color-accent);
+  animation: confirm-bar-shrink 2s linear forwards;
+}
+
+@keyframes confirm-bar-shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* 确认卡闪入动画 */
+.event-confirm-card.event-slide-in {
+  animation: event-slide-in 0.35s ease-out;
+}
+
+@keyframes event-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 事件列表项 - 来源标识 */
+.event-source {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.event-item.event-newest {
+  border-left: 2px solid var(--color-accent);
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.06), transparent);
+}
+
+.event-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.82rem;
+}
+
+.event-item:last-child {
+  border-bottom: none;
+}
+
+.event-list-inner {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.event-timer {
+  font-family: 'Barlow Condensed', monospace;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.event-team {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+.event-player {
+  font-weight: 500;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-action {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.event-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  opacity: 0.5;
+}
+
+/* 一键滚动到底部按钮 */
+#event-list + .event-scroll-btn {
+  display: none;
+}
+
+/* 极窄屏适配语言按钮 */
+@media (max-width: 360px) {
+  #voice-btn {
+    width: 48px;
+    height: 48px;
+    bottom: 16px;
+    right: 12px;
+    font-size: 1.2rem;
+  }
+}

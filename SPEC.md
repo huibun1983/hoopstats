@@ -1,9 +1,9 @@
 # HoopStats 项目规划文档
 
-> **文档状态**: ✅ Phase 1 + 1.5 已完成，Phase 2 全量完成（6/6），认证后端已部署上线（api.statstalking.com），样例数据已注入
+> **文档状态**: ✅ Phase 2 全量完成（6/6），认证后端已部署上线（api.statstalking.com），样例数据已注入，语音录入已实现
 > **创建日期**: 2026-05-11
-> **最后更新**: 2026-06-01 16:40
-> **版本**: v3.4
+> **最后更新**: 2026-06-01 17:15
+> **版本**: v3.5
 > **负责人**: 周瑜 CPO
 
 ---
@@ -760,6 +760,7 @@ KEYBINDINGS: {
 | 2026-06-01 | v3.2 | **认证后端部署完成**：Cloudflare Workers + D1 上线，hoopstats-api 部署于 workers.dev；创建 D1 数据库 hoopstats-db；users + user_data 表建表；JWT 密钥生成；5个API端点运行；auth.js API_BASE 指向 workers.dev 临时URL | 周瑜 CPO |
 | 2026-06-01 | v3.3 | **DNS & CORS 优化**：Cloudflare DNS CNAME api → workers.dev 配置完成并验证通过；auth.js API_BASE 切换为 api.statstalking.com；Worker CORS 升级为动态 Origin 匹配；部署新版 Worker v73bc894d | 周瑜 CPO |
 | 2026-06-01 | v3.4 | **样例数据注入**：新增 demo.js 模块，首次加载自动注入2支球队、14名球员、2场已完赛比赛（含逐球事件）、3篇博客文章；智能检测已有用户数据不覆盖 | 周瑜 CPO |
+| 2026-06-01 | v3.5 | **语音录入比赛事件**：新增 voice.js 模块（Web Speech API 语音识别+NLP命令解析+球员模糊匹配）；浮动语音按钮（待命/监听/识别 3态+脉冲/旋转动画）；事件日志增强（source字段区分⌨️/🎤、最新事件确认卡+闪入动画、2s倒计时进度条）；recordAction() 支持 source 参数传递 | 周瑜 CPO |
 
 ---
 
@@ -785,7 +786,7 @@ Week 2（6月第2周）: 球队权限管理 → Toast抽取 + 极窄屏
 Week 3+4: 个人博客模块
 ```
 
-> **✅ Phase 1 + 1.5 已全部完成。** 当前版本（v3.0, 2026-06-01）：8,175行代码，5个SPA页面，15个快捷键，Chart.js 数据看板，BoxScore 球员统计，JWT 认证前端，已部署到 statstalking.com。
+> **✅ Phase 2 全量交付完成。** 当前版本（v3.5）：语音录入、样例数据、认证后端全部就绪。
 >
 > **📋 Phase 2 全量完成（6/6）。** 认证后端已部署上线 api.statstalking.com。
 > Phase 3 路线：约球社交 → 积分体系 → 球星抽卡 → 排行榜。

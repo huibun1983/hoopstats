@@ -324,6 +324,12 @@
 
       </div><!-- /score-viewport -->
 
+      <!-- 语音录入按钮（浮动右下） -->
+      <button id="voice-btn" title="按住说话 (V)" onpointerdown="VoiceManager.startListening()" onpointerup="VoiceManager.stopListening()" onpointerleave="VoiceManager.stopListening()">
+        🎤
+      </button>
+      <div id="voice-tooltip">按住说话，松手识别</div>
+
       <!-- 下方滚动区域：事件+统计 -->
       <div class="score-scroll-area">
       <div class="card mt-lg">
@@ -929,6 +935,7 @@
   <script src="js/teams.js"></script>
   <script src="js/players.js"></script>
   <script src="js/games.js"></script>
+  <script src="js/voice.js"></script>
   <script src="js/demo.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/blog.js"></script>
