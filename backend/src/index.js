@@ -4,23 +4,42 @@
  */
 
 // ==================== CORS ====================
+const ALLOWED_ORIGINS = [
+  'https://statstalking.com',
+  'https://api.statstalking.com',
+  'http://localhost:8910',
+  'http://127.0.0.1:8910'
+];
+
+function getCORSHeaders(origin) {
+  const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://statstalking.com',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Max-Age': '86400',
 };
 
-function cors(res) {
-  return new Response(res.body, { status: res.status, headers: { ...Object.fromEntries(res.headers), ...CORS_HEADERS } });
+function cors(res, origin) {
+  const corsHdrs = origin ? getCORSHeaders(origin) : CORS_HEADERS;
+  return new Response(res.body, { status: res.status, headers: { ...Object.fromEntries(res.headers), ...corsHdrs } });
 }
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
+function _json(data, status = 200, origin) {
+  const corsHdrs = origin ? getCORSHeaders(origin) : CORS_HEADERS;
+  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...corsHdrs } });
 }
 
-function error(msg, status = 400) {
-  return json({ error: msg }, status);
+function _error(msg, status = 400, origin) {
+  return _json({ error: msg }, status, origin);
 }
 
 // ==================== Crypto Utils ====================
@@ -96,10 +115,15 @@ async function handleRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
+  const origin = request.headers.get('Origin') || '';
+
+  // Curried helpers with origin
+  const json = (data, status) => _json(data, status, origin);
+  const error = (msg, status) => _error(msg, status, origin);
 
   // CORS preflight
   if (method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
+    return new Response(null, { status: 204, headers: getCORSHeaders(origin) });
   }
 
   // POST /auth/register
@@ -180,7 +204,7 @@ export default {
       return await handleRequest(request, env);
     } catch (e) {
       console.error(e);
-      return error('Internal Server Error: ' + e.message, 500);
+      return _error('Internal Server Error: ' + e.message, 500);
     }
   }
 };

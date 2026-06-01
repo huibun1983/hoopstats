@@ -6,8 +6,7 @@
 
 const Auth = {
   // API配置
-  // workers.dev 临时URL，DNS就绪后切回 api.statstalking.com
-  API_BASE: 'https://hoopstats-api.huibun.workers.dev',
+  API_BASE: 'https://api.statstalking.com',
   TOKEN_KEY: 'hoopstats_auth_token',
   USER_KEY: 'hoopstats_user',
   ANON_KEY: 'hoopstats_anonymous_id',

@@ -11,7 +11,6 @@ binding = "DB"
 database_name = "hoopstats-db"
 database_id = "7408210e-4d93-42d4-8a4d-33e3d2fff15f"
 
-# [[routes]] - 注释掉，等 DNS 记录添加后再启用
-# pattern = "api.statstalking.com/*"
-# zone_name = "statstalking.com"
+# DNS已配置: CNAME api → hoopstats-api.huibun.workers.dev (🟠代理)
+# workers_dev + CNAME已能正常工作，无需额外routes
 

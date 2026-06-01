@@ -1,9 +1,9 @@
 # HoopStats 项目规划文档
 
-> **文档状态**: ✅ Phase 1 + 1.5 已完成，Phase 2 全量完成（6/6），认证后端已部署
+> **文档状态**: ✅ Phase 1 + 1.5 已完成，Phase 2 全量完成（6/6），认证后端已部署上线（api.statstalking.com）
 > **创建日期**: 2026-05-11
-> **最后更新**: 2026-06-01 16:03
-> **版本**: v3.2
+> **最后更新**: 2026-06-01 16:25
+> **版本**: v3.3
 > **负责人**: 周瑜 CPO
 
 ---
@@ -376,7 +376,7 @@ hoopstats/
 |------|---------|------|
 | **当前（Phase 1+1.5）** | SPA + localStorage + Chart.js | 5个页面，本地存储，数据看板 |
 | **当前部署** | GitHub Pages + Cloudflare DNS | statstalking.com，自动构建 |
-| Phase 2 扩展 | + Cloudflare Workers + D1 | 认证后端（代码已就绪，待部署） |
+| Phase 2 扩展 | + Cloudflare Workers + D1 | api.statstalking.com（CNAME → workers.dev） |
 | Phase 3 云端 | 全面云端同步 | 多设备数据一致，实时同步 |
 
 ### 5.2 数据模型（localStorage）
@@ -558,7 +558,7 @@ KEYBINDINGS: {
 | 模块 | 核心功能点 | 当前状态 | 验收标准 |
 |------|-----------|---------|---------|
 | 用户认证前端 | 注册/登录/JWT管理/模态框 | ✅ 已完成 | 账号体系前端运作 |
-| 认证后端部署 | Cloudflare Workers + D1 | ✅ **已部署** | hoopstats-api.huibun.workers.dev |
+| 认证后端部署 | Cloudflare Workers + D1 | ✅ **已部署** | api.statstalking.com |
 | 个人博客 | 发布/评论/点赞 | ✅ 已完成 | 内容可发布、可互动 |
 | 约球社交 | 发起/报名/通知 | ⬜ 未开始 | 完整约球流程 |
 | 球员生涯数据 | 历史数据统计汇总 | ✅ 已完成 | 每球员可查生涯统计 |
@@ -579,7 +579,7 @@ KEYBINDINGS: {
 | 5 | 比赛管理 | 场地关联管理未实现 | P2 |
 | 6 | 系统 | 数据导出（完整比赛报告/PDF）未实现 | P2 |
 | 7 | 系统 | 云端数据同步未实现 | P3 |
-| 8 | 认证 | 后端 API 部署（Cloudflare Workers + D1）| ✅ **已部署**，workers.dev URL |
+| 8 | 认证 | 后端 API 部署（Cloudflare Workers + D1）| ✅ **已部署**，api.statstalking.com |
 
 ### 7.2 代码质量优化项（v3.1 最新状态）
 
@@ -627,7 +627,7 @@ KEYBINDINGS: {
 
 | # | 问题 | 状态 |
 |---|------|------|
-| 1 | `api.statstalling.com` DNS 记录待添加 | 需在 Cloudflare DNS 添加 CNAME → workers.dev，然后恢复 wrangler.toml routes |
+| 1 | DNS 配置完成 | Cloudflare DNS CNAME api → workers.dev + 🟠代理 | ✅ 2026-06-01 验证通过 |
 | 2 | 是否需要微信小程序版本？ | ⏳ 待确认 |
 | 3 | Phase 3（约球社交/积分/抽卡）优先级？ | ⏳ 待排期 |
 | 4 | 博客是否需要后端存储？ | ⚠️ 当前 localStorage，多设备不同步 |
@@ -757,7 +757,8 @@ KEYBINDINGS: {
 | 2026-05-20 | v2.3 | **新增本场数据统计面板**：4标签页（常规/投篮/进阶/预测）、球队数据对比、左右球员列表、球员详情模式；参考NBA转播风格 | 周瑜 CPO |
 | 2026-06-01 | v3.0 | **Phase 1.5 全量同步**：新增数据看板模块（§3.5）；新增用户认证模块（§3.1）；更新文件结构（§2.2）和技术栈（§2.1）；更新SPA导航结构（§2.3）；更新已知问题（§7.1/§7.2）；更新阶段划分（§6.1）；更新所有待确认事项；更新第十章实现记录 | 周瑜 CPO |
 | 2026-06-01 | v3.1 | **Phase 2 前端全量交付**：Toast公共模块抽取（toast.js）；极窄屏适配补全（≤360px断点）；球员生涯数据统计（跨比赛聚合+模态框）；球队权限系统（创建者/管理员/成员角色）；个人博客模块（发布/列表/详情/点赞/评论）；6页面SPA架构；修复dashboard.js重复加载；代码总量9,359行 | 周瑜 CPO |
-| 2026-06-01 | v3.2 | **认证后端部署完成**：Cloudflare Workers + D1 上线，hoopstats-api 部署于 workers.dev；创建 D1 数据库 hoopstats-db；users + user_data 表建表；JWT 密钥生成；5个API端点运行（/health, /auth/register, /auth/login, /auth/me, /data/）；auth.js API_BASE 指向 workers.dev 临时URL；待设置 api.statstalking.com DNS 记录 | 周瑜 CPO |
+| 2026-06-01 | v3.2 | **认证后端部署完成**：Cloudflare Workers + D1 上线，hoopstats-api 部署于 workers.dev；创建 D1 数据库 hoopstats-db；users + user_data 表建表；JWT 密钥生成；5个API端点运行；auth.js API_BASE 指向 workers.dev 临时URL | 周瑜 CPO |
+| 2026-06-01 | v3.3 | **DNS & CORS 优化**：Cloudflare DNS CNAME api → workers.dev 配置完成并验证通过；auth.js API_BASE 切换为 api.statstalking.com；Worker CORS 升级为动态 Origin 匹配；部署新版 Worker v73bc894d | 周瑜 CPO |
 
 ---
 
@@ -785,5 +786,5 @@ Week 3+4: 个人博客模块
 
 > **✅ Phase 1 + 1.5 已全部完成。** 当前版本（v3.0, 2026-06-01）：8,175行代码，5个SPA页面，15个快捷键，Chart.js 数据看板，BoxScore 球员统计，JWT 认证前端，已部署到 statstalking.com。
 >
-> **📋 Phase 2 全量完成（6/6）。** 认证后端已部署至 workers.dev。
+> **📋 Phase 2 全量完成（6/6）。** 认证后端已部署上线 api.statstalking.com。
 > Phase 3 路线：约球社交 → 积分体系 → 球星抽卡 → 排行榜。
