@@ -1,12 +1,13 @@
 /**
  * HoopStats - 用户认证模块
  * Phase 2: 注册/登录/用户状态管理
- * API: api.statstalking.com (Cloudflare Workers + D1)
+ * API: hoopstats-api.huibun.workers.dev (Cloudflare Workers + D1)
  */
 
 const Auth = {
   // API配置
-  API_BASE: 'https://api.statstalking.com',
+  // workers.dev 临时URL，DNS就绪后切回 api.statstalking.com
+  API_BASE: 'https://hoopstats-api.huibun.workers.dev',
   TOKEN_KEY: 'hoopstats_auth_token',
   USER_KEY: 'hoopstats_user',
   ANON_KEY: 'hoopstats_anonymous_id',

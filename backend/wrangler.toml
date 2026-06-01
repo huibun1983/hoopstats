@@ -1,0 +1,17 @@
+name = "hoopstats-api"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+
+[vars]
+JWT_SECRET = "34d4006fc747c4435332c09534f67590c3ac13721074f5b0d80610d5798d32a1"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hoopstats-db"
+database_id = "7408210e-4d93-42d4-8a4d-33e3d2fff15f"
+
+# [[routes]] - 注释掉，等 DNS 记录添加后再启用
+# pattern = "api.statstalking.com/*"
+# zone_name = "statstalking.com"
+
