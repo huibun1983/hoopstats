@@ -1130,8 +1130,11 @@ body {
 /* 球队+动作 并排布局 */
 .score-ops-grid {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: var(--space-sm);
+  grid-template-columns: minmax(380px, 1fr) minmax(440px, 1.25fr);
+  gap: var(--space-md);
+  max-width: 1150px;
+  margin: 0 auto;
+  width: 100%;
   flex-shrink: 0;
 }
 
@@ -1166,12 +1169,15 @@ body {
 /* 紧凑按钮网格 */
 .game-control-panel.compact-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: var(--space-sm);
   padding: var(--space-sm);
   background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
   border-radius: var(--radius-md);
   margin-bottom: var(--space-xs);
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .compact-grid .action-btn {
