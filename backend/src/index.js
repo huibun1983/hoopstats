@@ -1,6 +1,7 @@
 /**
  * HoopStats API — Cloudflare Workers
- * Endpoints: /auth/register, /auth/login, /data/:entity
+ * Endpoints: /auth/register, /auth/login, /data/:entity, /api/asr
+ * ASR: 腾讯云 SentenceRecognition（TC3-HMAC-SHA256 签名）
  */
 
 // ==================== CORS ====================
@@ -40,6 +41,131 @@ function _json(data, status = 200, origin) {
 
 function _error(msg, status = 400, origin) {
   return _json({ error: msg }, status, origin);
+}
+
+// ==================== Tencent Cloud ASR (TC3-HMAC-SHA256) ====================
+const ASR_HOST = 'asr.tencentcloudapi.com';
+const ASR_SERVICE = 'asr';
+const ASR_VERSION = '2019-06-14';
+const ASR_ACTION = 'SentenceRecognition';
+
+function buf2hex(buf) {
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function sha256hex(data) {
+  const d = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+  return buf2hex(await crypto.subtle.digest('SHA-256', d));
+}
+
+async function tc3Sign(secretId, secretKey, timestamp, date, service, payload) {
+  const enc = new TextEncoder();
+  const secretKeyBytes = enc.encode(secretKey);
+
+  const hmacKey = await crypto.subtle.importKey('raw', secretKeyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const kDate = new Uint8Array(await crypto.subtle.sign('HMAC', hmacKey, enc.encode(date)));
+  const kDateKey = await crypto.subtle.importKey('raw', kDate, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const kService = new Uint8Array(await crypto.subtle.sign('HMAC', kDateKey, enc.encode(service)));
+  const kServiceKey = await crypto.subtle.importKey('raw', kService, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const kSigning = new Uint8Array(await crypto.subtle.sign('HMAC', kServiceKey, enc.encode('tc3_request')));
+
+  const canonicalHeaders = `content-type:application/json; charset=utf-8\nhost:${ASR_HOST}\n`;
+  const signedHeaders = 'content-type;host';
+  const hashedPayload = await sha256hex(payload);
+  const canonicalRequest = `POST\n/\n\n${canonicalHeaders}\n${signedHeaders}\n${hashedPayload}`;
+  const hashedCanonicalRequest = await sha256hex(canonicalRequest);
+  const credentialScope = `${date}/${service}/tc3_request`;
+  const stringToSign = `TC3-HMAC-SHA256\n${timestamp}\n${credentialScope}\n${hashedCanonicalRequest}`;
+
+  const kSigningKey = await crypto.subtle.importKey('raw', kSigning, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const signature = buf2hex(await crypto.subtle.sign('HMAC', kSigningKey, enc.encode(stringToSign)));
+
+  return `TC3-HMAC-SHA256 Credential=${secretId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+}
+
+async function callASR(audioBase64, dataLen, voiceFormat, secretId, secretKey, sampleRate = 16000) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const date = new Date(timestamp * 1000).toISOString().slice(0, 10);
+
+  const payload = JSON.stringify({
+    Action: ASR_ACTION,
+    Version: ASR_VERSION,
+    EngSerViceType: sampleRate === 8000 ? '8k_zh' : '16k_zh',
+    VoiceFormat: voiceFormat,
+    SourceType: 1,
+    Data: audioBase64,
+    DataLen: dataLen,
+  });
+
+  const authorization = await tc3Sign(secretId, secretKey, timestamp, date, ASR_SERVICE, payload);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+  let res;
+  try {
+    res = await fetch(`https://${ASR_HOST}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Host': ASR_HOST,
+        'X-TC-Version': ASR_VERSION,
+        'X-TC-Action': ASR_ACTION,
+        'X-TC-Timestamp': String(timestamp),
+        'X-TC-Region': 'ap-guangzhou',
+        'Authorization': authorization,
+      },
+      body: payload,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') throw new Error('腾讯云 ASR 请求超时(12秒)');
+    throw err;
+  }
+  clearTimeout(timeoutId);
+
+  const json = await res.json();
+  if (!json.Response || json.Response.Error) {
+    throw new Error(json.Response?.Error?.Message || 'ASR 调用失败');
+  }
+  return json.Response.Result || '';
+}
+
+// ASR 路由处理
+async function handleASR(request, env) {
+  if (request.method !== 'POST') {
+    return _json({ success: false, error: '仅支持 POST 方法' }, 405);
+  }
+
+  let body;
+  try { body = await request.json(); } catch {
+    return _json({ success: false, error: '请求体必须是合法 JSON' }, 400);
+  }
+
+  const { audioData, voiceFormat } = body;
+  if (!audioData || typeof audioData !== 'string') {
+    return _json({ success: false, error: 'audioData (base64) 必填' }, 400);
+  }
+
+  const secretId = env.ASR_SECRET_ID;
+  const secretKey = env.ASR_SECRET_KEY;
+  if (!secretId || !secretKey) {
+    return _json({ success: false, error: 'ASR 未配置', suggestion: '请设置 ASR_SECRET_ID / ASR_SECRET_KEY secrets' }, 500);
+  }
+
+  try {
+    const dataLen = body.dataLen || Math.floor(audioData.length * 3 / 4);
+    const text = await callASR(
+      audioData, dataLen,
+      voiceFormat || 'webm',
+      secretId, secretKey,
+      body.sampleRate || 16000
+    );
+    return _json({ success: true, text, provider: 'tencent' });
+  } catch (err) {
+    console.error('[ASR]', err.message);
+    return _json({ success: false, error: err.message }, 502);
+  }
 }
 
 // ==================== Crypto Utils ====================
@@ -192,6 +318,11 @@ async function handleRequest(request, env) {
   if (path === '/stats' && method === 'GET') {
     const userCount = await env.DB.prepare('SELECT COUNT(*) as count FROM users').first();
     return json({ status: 'ok', users: userCount.count });
+  }
+
+  // POST /api/asr — 语音识别
+  if (path === '/api/asr') {
+    return handleASR(request, env);
   }
 
   return error('Not found', 404);

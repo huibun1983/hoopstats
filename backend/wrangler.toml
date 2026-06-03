@@ -14,3 +14,9 @@ database_id = "7408210e-4d93-42d4-8a4d-33e3d2fff15f"
 # DNS已配置: CNAME api → hoopstats-api.huibun.workers.dev (🟠代理)
 # workers_dev + CNAME已能正常工作，无需额外routes
 
+# Secrets（通过 wrangler secret put 设置）:
+#   wrangler secret put ASR_SECRET_ID    # 腾讯云 SecretId
+#   wrangler secret put ASR_SECRET_KEY   # 腾讯云 SecretKey
+# ASR 使用 腾讯云 SentenceRecognition (TC3-HMAC-SHA256 签名)
+# 免费额度: 500次/天（>500次 ¥0.003/次）
+
