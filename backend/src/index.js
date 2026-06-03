@@ -60,7 +60,8 @@ async function sha256hex(data) {
 
 async function tc3Sign(secretId, secretKey, timestamp, date, service, payload) {
   const enc = new TextEncoder();
-  const secretKeyBytes = enc.encode(secretKey);
+  // TC3 signature MUST prepend "TC3" to secret key
+  const secretKeyBytes = enc.encode('TC3' + secretKey);
 
   const hmacKey = await crypto.subtle.importKey('raw', secretKeyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const kDate = new Uint8Array(await crypto.subtle.sign('HMAC', hmacKey, enc.encode(date)));
@@ -88,8 +89,6 @@ async function callASR(audioBase64, dataLen, voiceFormat, secretId, secretKey, s
   const date = new Date(timestamp * 1000).toISOString().slice(0, 10);
 
   const payload = JSON.stringify({
-    Action: ASR_ACTION,
-    Version: ASR_VERSION,
     EngSerViceType: sampleRate === 8000 ? '8k_zh' : '16k_zh',
     VoiceFormat: voiceFormat,
     SourceType: 1,
