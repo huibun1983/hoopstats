@@ -40,17 +40,42 @@ const VoiceManager = {
   /** 初始化 */
   init() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
     if (!SpeechRecognition) {
-      console.warn('[Voice] Web Speech API 不支持');
+      console.warn('[Voice] 浏览器不支持 SpeechRecognition API');
+
+      // Firefox / 微信等完全没有API的浏览器
+      const ua = navigator.userAgent;
+      const reason = ua.includes('Firefox') ? 'Firefox 不支持 Web Speech API'
+        : ua.includes('MicroMessenger') ? '微信内置浏览器不支持语音'
+        : '浏览器不支持语音识别 API';
+
+      this.SpeechRecognition = null;
       this.isSupported = false;
+      this._unsupportedReason = reason;
+      this._createUI();
       return;
     }
 
     this.SpeechRecognition = SpeechRecognition;
+
+    // 快速探针：尝试创建实例，检查是否立即抛异常
+    try {
+      const probe = new SpeechRecognition();
+      probe.abort(); // 立即销毁，不做实际请求
+    } catch (e) {
+      console.error('[Voice] 创建 SpeechRecognition 实例失败:', e.message);
+      this.isSupported = false;
+      this._unsupportedReason = 'API 创建失败: ' + e.message;
+      this._createUI();
+      return;
+    }
+
     this.isSupported = true;
+    this._unsupportedReason = null;
     this._createUI();
     this._bindEvents();
-    console.log('[Voice] 初始化完成，支持语音录入');
+    console.log('[Voice] 初始化完成，语音录入就绪');
   },
 
   /** 创建语音识别实例 */
@@ -112,7 +137,17 @@ const VoiceManager = {
   /** 开始监听 */
   startListening() {
     if (!this.isSupported) {
-      Toast.show('当前浏览器不支持语音录入，请使用Chrome打开', 'warning');
+      // Chrome 可用时不应走到这里，走到这步说明真的是不支持的浏览器
+      const ua = navigator.userAgent;
+      if (ua.includes('Chrome') && !ua.includes('Edge')) {
+        Toast.show('Chrome 语音服务连接失败，请检查: ①是否用 localhost 访问 ②麦克风权限', 'error');
+      } else if (ua.includes('Firefox')) {
+        Toast.show('Firefox 不支持语音识别，请使用 Chrome 或 Edge', 'warning');
+      } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
+        Toast.show('Safari 需 HTTPS + 首次手动授权，点击地址栏🔒→允许麦克风', 'warning');
+      } else {
+        Toast.show('当前浏览器不支持语音识别，请使用 Chrome 浏览器打开', 'warning');
+      }
       return false;
     }
 
@@ -366,6 +401,7 @@ const VoiceManager = {
   _uiState: 'idle',
   _btn: null,
   _indicator: null,
+  _tooltip: null,
 
   /** 创建语音按钮UI */
   _createUI() {
@@ -386,19 +422,39 @@ const VoiceManager = {
     indicator.className = 'voice-indicator';
     indicator.textContent = '语音录入';
 
+    // 提示浮层
+    const tooltip = document.createElement('div');
+    tooltip.id = 'voice-tooltip';
+    tooltip.textContent = '按住说话，松手识别';
+
     const wrapper = document.createElement('div');
     wrapper.className = 'voice-wrapper';
     wrapper.appendChild(btn);
     wrapper.appendChild(indicator);
+    wrapper.appendChild(tooltip);
     scorePage.appendChild(wrapper);
 
     this._btn = btn;
     this._indicator = indicator;
+    this._tooltip = tooltip;
 
     if (!this.isSupported) {
       btn.classList.add('voice-disabled');
-      btn.title = '当前浏览器不支持语音录入，请使用Chrome';
-      indicator.textContent = '不支持';
+      const reason = this._unsupportedReason || '语音识别不可用';
+      btn.title = reason;
+      indicator.textContent = '不可用';
+
+      // 点击禁用按钮时显示详细诊断
+      btn.addEventListener('click', () => {
+        const ua = navigator.userAgent;
+        let detail = `原因: ${reason}\n`;
+        detail += `浏览器: ${ua.includes('Chrome') ? 'Chrome' : ua.includes('Firefox') ? 'Firefox' : ua.includes('Safari') ? 'Safari' : '未知'}\n`;
+        if (ua.includes('Chrome')) {
+          detail += '\nChrome 需要访问 Google 语音服务器。\n若在中国大陆，可能需要科学上网。\n未来版本将支持讯飞离线方案。';
+        }
+        Toast.show(detail.split('\n')[0], 'error');
+        console.warn('[Voice]', detail);
+      });
     }
   },
 

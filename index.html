@@ -324,11 +324,7 @@
 
       </div><!-- /score-viewport -->
 
-      <!-- 语音录入按钮（浮动右下） -->
-      <button id="voice-btn" title="按住说话 (V)" onpointerdown="VoiceManager.startListening()" onpointerup="VoiceManager.stopListening()" onpointerleave="VoiceManager.stopListening()">
-        🎤
-      </button>
-      <div id="voice-tooltip">按住说话，松手识别</div>
+      <!-- 语音按钮由 voice.js 动态创建 -->
 
       <!-- 下方滚动区域：事件+统计 -->
       <div class="score-scroll-area">
@@ -983,6 +979,7 @@
       // 初始化各模块
       GameManager.init();
       Auth.init();
+      VoiceManager.init();  // 语音录入（需在 GameManager.init 之后）
 
       // 看板预加载（不在首屏渲染，等用户点击）
       if (typeof Dashboard !== 'undefined' && typeof Dashboard.preload === 'function') {
