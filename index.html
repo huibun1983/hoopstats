@@ -54,8 +54,10 @@
       </ul>
     </nav>
     <div class="topbar-user" id="nav-user-area">
-      <button class="btn btn-sm btn-outline" onclick="Auth.showModal('login')">登录</button>
-      <button class="btn btn-sm btn-primary" onclick="Auth.showModal('register')">注册</button>
+      <button class="btn btn-sm btn-sync" onclick="Auth.showSyncModal()" title="同步数据到云端，可跨设备使用">
+        <span class="sync-icon">☁</span>
+        <span class="desk-only">同步数据</span>
+      </button>
     </div>
   </header>
 
@@ -93,9 +95,9 @@
         </a>
       </li>
       <li class="nav-item" id="bottom-nav-user-area">
-        <a class="nav-link" onclick="Auth.showModal('login')">
-          <span class="nav-icon">🔑</span>
-          <span class="nav-text">登录</span>
+        <a class="nav-link" onclick="Auth.showSyncModal()">
+          <span class="nav-icon">☁</span>
+          <span class="nav-text">同步</span>
         </a>
       </li>
     </ul>
@@ -841,8 +843,16 @@
   <div id="auth-modal" class="modal-overlay" onclick="if(event.target===this) Auth.closeModal()">
     <div class="modal-box" style="max-width:400px;">
       <div class="modal-header">
-        <h3 class="modal-title" id="auth-modal-title">🔑 登录</h3>
+        <h3 class="modal-title" id="auth-modal-title">☁ 登录以同步数据</h3>
         <button class="modal-close" onclick="Auth.closeModal()">✕</button>
+      </div>
+      <!-- 同步说明横幅 -->
+      <div id="auth-sync-banner" class="auth-sync-banner">
+        <span class="sync-banner-icon">☁</span>
+        <div class="sync-banner-text">
+          <strong>无需账号即可使用全部功能</strong>
+          <span>注册账号后，数据将自动备份到云端，支持跨设备访问</span>
+        </div>
       </div>
       <form id="auth-form" class="modal-body" style="display:flex;flex-direction:column;gap:var(--space-md);">
         <div id="auth-name-group">
@@ -862,6 +872,7 @@
       <div class="modal-footer" style="flex-direction:column;gap:var(--space-sm);">
         <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block" onclick="document.getElementById('auth-form').requestSubmit()">登录</button>
         <button type="button" id="auth-switch-btn" class="btn btn-ghost btn-sm" style="width:100%;">还没有账号？去注册</button>
+        <button type="button" class="btn btn-ghost btn-xs" style="width:100%;opacity:0.6;" onclick="Auth.closeModal()">暂不同步，继续本地使用</button>
       </div>
     </div>
   </div>

@@ -2696,6 +2696,76 @@ body {
   margin-left: auto;
 }
 
+/* 云同步按钮（匿名状态） */
+.btn-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid rgba(99, 179, 237, 0.45);
+  border-radius: var(--radius-pill);
+  color: #63b3ed;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-sync:hover {
+  background: rgba(99, 179, 237, 0.12);
+  border-color: #63b3ed;
+  color: #90cdf4;
+}
+
+.sync-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* 同步说明横幅 */
+.auth-sync-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(99, 179, 237, 0.08);
+  border-bottom: 1px solid rgba(99, 179, 237, 0.18);
+  border-radius: 0;
+}
+
+.sync-banner-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  flex-shrink: 0;
+  padding-top: 2px;
+  color: #63b3ed;
+}
+
+.sync-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sync-banner-text strong {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.sync-banner-text span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* btn-xs 超小按钮 */
+.btn-xs {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+}
+
 .nav-user-badge {
   display: flex;
   align-items: center;

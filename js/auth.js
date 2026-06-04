@@ -1,7 +1,10 @@
 /**
  * HoopStats - 用户认证模块
- * Phase 2: 注册/登录/用户状态管理
- * API: hoopstats-api.huibun.workers.dev (Cloudflare Workers + D1)
+ * Phase 2: 匿名即用 + 可选云同步
+ * - 默认无需登录即可使用全部功能（数据存 localStorage）
+ * - 顶部「☁ 同步」按钮触发注册/登录弹窗
+ * - 登录成功后自动上传本地数据到云端 D1
+ * API: api.statstalking.com (Cloudflare Workers + D1)
  */
 
 const Auth = {
@@ -163,7 +166,9 @@ const Auth = {
   },
 
   /**
-   * 更新导航栏显示（登录/未登录状态）
+   * 更新导航栏显示（匿名/已登录状态）
+   * 默认匿名模式：显示「☁ 同步」按钮
+   * 已登录模式：显示用户头像 + 账号名
    */
   updateNavDisplay() {
     const user = this.getUser();
@@ -174,15 +179,18 @@ const Auth = {
     if (navUserArea) {
       if (loggedIn) {
         navUserArea.innerHTML = `
-          <span class="nav-user-badge" onclick="Auth.logout()" title="${user.email}">
+          <span class="nav-user-badge" title="${user.email}">
             <span class="nav-user-avatar">${(user.name || user.email)[0].toUpperCase()}</span>
             <span class="nav-user-name desk-only">${user.name || user.email}</span>
           </span>
+          <button class="btn btn-sm btn-ghost" onclick="Auth.logout()" title="退出登录">退出</button>
         `;
       } else {
         navUserArea.innerHTML = `
-          <button class="btn btn-sm btn-outline" onclick="Auth.showModal('login')">登录</button>
-          <button class="btn btn-sm btn-primary" onclick="Auth.showModal('register')">注册</button>
+          <button class="btn btn-sm btn-sync" onclick="Auth.showSyncModal()" title="同步数据到云端，可跨设备使用">
+            <span class="sync-icon">☁</span>
+            <span class="desk-only">同步数据</span>
+          </button>
         `;
       }
     }
@@ -193,19 +201,36 @@ const Auth = {
       if (loggedIn) {
         bottomUserArea.innerHTML = `
           <a class="nav-link" onclick="Auth.logout()">
-            <span class="nav-icon">👤</span>
-            <span class="nav-text">退出</span>
+            <span class="nav-user-avatar nav-icon">${(user.name || user.email)[0].toUpperCase()}</span>
+            <span class="nav-text">账号</span>
           </a>
         `;
       } else {
         bottomUserArea.innerHTML = `
-          <a class="nav-link" onclick="Auth.showModal('login')">
-            <span class="nav-icon">🔑</span>
-            <span class="nav-text">登录</span>
+          <a class="nav-link" onclick="Auth.showSyncModal()">
+            <span class="nav-icon">☁</span>
+            <span class="nav-text">同步</span>
           </a>
         `;
       }
     }
+  },
+
+  /**
+   * 显示云同步弹窗（匿名用户触发登录/注册）
+   * 说明为何需要账号：跨设备同步
+   */
+  showSyncModal() {
+    const modal = document.getElementById('auth-modal');
+    if (!modal) return;
+
+    // 在 modal 顶部插入同步说明横幅
+    const banner = document.getElementById('auth-sync-banner');
+    if (banner) {
+      banner.style.display = 'block';
+    }
+
+    this.showModal('login');
   },
 
   /**
@@ -222,7 +247,7 @@ const Auth = {
     const switchBtn = document.getElementById('auth-switch-btn');
     const nameGroup = document.getElementById('auth-name-group');
 
-    if (title) title.textContent = mode === 'login' ? '🔑 登录' : '📝 注册';
+    if (title) title.textContent = mode === 'login' ? '☁ 登录以同步数据' : '☁ 注册并同步数据';
     if (submitBtn) submitBtn.textContent = mode === 'login' ? '登录' : '注册';
     if (errorEl) errorEl.style.display = 'none';
     if (nameGroup) nameGroup.style.display = mode === 'register' ? '' : 'none';
@@ -263,7 +288,15 @@ const Auth = {
         if (result.success) {
           modal.classList.remove('active');
           // 尝试同步本地数据到云端
-          this.syncToCloud();
+          const syncResult = await this.syncToCloud();
+          if (window.Toast) {
+            Toast.show(
+              syncResult.synced > 0
+                ? `✅ 登录成功，本地数据已同步到云端`
+                : `✅ 登录成功，数据将自动云端备份`,
+              'success'
+            );
+          }
         } else {
           this.showError(result.error);
           submitBtn.disabled = false;
