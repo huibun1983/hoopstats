@@ -312,6 +312,35 @@ const GameManager = {
         ? '<span class="badge badge-success">● 直播中</span>'
         : '<span class="badge badge-info">✓ 已结束</span>';
 
+      // S3a: 计算已结束比赛的投篮命中率摘要
+      let shootingSummaryHtml = '';
+      if (game.status === 'ended') {
+        const events = game.events || [];
+        let homeFgm = 0, homeFga = 0, awayFgm = 0, awayFga = 0;
+        const homePids = new Set((game.homePlayers || []).map(p => p.id));
+        const awayPids = new Set((game.awayPlayers || []).map(p => p.id));
+        events.forEach(ev => {
+          const pid = ev.playerId;
+          if (!pid) return;
+          const isHome = homePids.has(pid);
+          const isAway = awayPids.has(pid);
+          if (!isHome && !isAway) return;
+          if (ev.action === '2分命中' || ev.action === '3分命中') {
+            if (isHome) { homeFgm++; homeFga++; } else { awayFgm++; awayFga++; }
+          } else if (ev.action === '2分不中' || ev.action === '3分不中') {
+            if (isHome) { homeFga++; } else { awayFga++; }
+          }
+        });
+        const homePct = homeFga > 0 ? (homeFgm / homeFga * 100).toFixed(1) : '0.0';
+        const awayPct = awayFga > 0 ? (awayFgm / awayFga * 100).toFixed(1) : '0.0';
+        const homeName = homeTeam?.name || '主队';
+        const awayName = awayTeam?.name || '客队';
+        shootingSummaryHtml = `
+          <div class="game-shooting-summary text-dim text-sm">
+            ${homeName}: FG ${homeFgm}/${homeFga} (${homePct}%) &nbsp;|&nbsp; ${awayName}: FG ${awayFgm}/${awayFga} (${awayPct}%)
+          </div>`;
+      }
+
       return `
         <div class="card" onclick="GameManager.resumeGame('${game.id}')" style="cursor:pointer;">
           <div class="card-header">
@@ -346,6 +375,7 @@ const GameManager = {
               <div class="score-value away">${game.awayScore || 0}</div>
             </div>
           </div>
+          ${shootingSummaryHtml}
         </div>
       `;
     }).join('');
@@ -2130,13 +2160,23 @@ const GameManager = {
     // 按团队分组、按得分降序排列
     const home = allPlayers
       .filter(p => p.team === 'home')
-      .map(p => score[p.id])
+      .map(p => {
+        const s = score[p.id];
+        if (!s) return null;
+        s.fgPct = s.fga > 0 ? (s.fgm / s.fga * 100).toFixed(1) + '%' : '-';
+        return s;
+      })
       .filter(s => s && (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.pf > 0)) // 至少有一项统计
       .sort((a, b) => b.pts - a.pts);
 
     const away = allPlayers
       .filter(p => p.team === 'away')
-      .map(p => score[p.id])
+      .map(p => {
+        const s = score[p.id];
+        if (!s) return null;
+        s.fgPct = s.fga > 0 ? (s.fgm / s.fga * 100).toFixed(1) + '%' : '-';
+        return s;
+      })
       .filter(s => s && (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.pf > 0))
       .sort((a, b) => b.pts - a.pts);
 
@@ -2168,8 +2208,8 @@ const GameManager = {
     card.style.display = '';
 
     // 顶部表头缩写
-    const headers = ['#', '球员', 'PTS', 'FG', '3P', 'FT', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'PF'];
-    const cols = ['number', 'name', 'pts', 'fg', 'fg3', 'ft', 'reb', 'ast', 'stl', 'blk', 'tov', 'pf'];
+    const headers = ['#', '球员', 'PTS', 'FG', 'FG%', '3P', 'FT', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'PF'];
+    const cols = ['number', 'name', 'pts', 'fg', 'fgPct', 'fg3', 'ft', 'reb', 'ast', 'stl', 'blk', 'tov', 'pf'];
 
     const renderTeamTable = (teamLabel, players, teamClass) => {
       if (players.length === 0) return '';
@@ -2187,6 +2227,7 @@ const GameManager = {
                   <td class="bs-name">${p.name}</td>
                   <td class="bs-highlight">${p.pts}</td>
                   <td>${p.fgm}-${p.fga}</td>
+                  <td class="bs-fgpct">${p.fgPct || '-'}</td>
                   <td>${p.fg3m}-${p.fg3a}</td>
                   <td>${p.ftm}-${p.fta}</td>
                   <td>${p.reb}</td>

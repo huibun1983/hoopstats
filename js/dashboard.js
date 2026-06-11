@@ -212,15 +212,17 @@ const Dashboard = {
       document.getElementById('team-metrics').innerHTML = `
         <div class="empty-state" style="grid-column:1/-1;">
           <div class="empty-icon">📊</div>
-          <div class="empty-title">暂无数据</div>
-          <div class="empty-desc">创建球队并记录比赛后，这里将展示数据看板</div>
+          <div class="empty-title">还没有比赛数据</div>
+          <div class="empty-desc">记录你的第一场比赛，看板将自动生成得分趋势、命中率等分析</div>
+          <a href="#" onclick="document.querySelector('[data-page=games]') ? document.querySelector('[data-page=games]').click() : showPage('games');return false;" class="btn btn-primary btn-sm" style="margin-top:var(--space-md);">➕ 去创建比赛</a>
         </div>`;
     } else {
       document.getElementById('player-metrics').innerHTML = `
         <div class="empty-state" style="grid-column:1/-1;">
           <div class="empty-icon">👤</div>
-          <div class="empty-title">暂无数据</div>
-          <div class="empty-desc">添加球员并记录比赛后，这里将展示个人数据</div>
+          <div class="empty-title">还没有球员数据</div>
+          <div class="empty-desc">添加球员并记录比赛后，这里将展示每位球员的命中率、PER、雷达图等深度分析</div>
+          <a href="#" onclick="document.querySelector('[data-page=players]') ? document.querySelector('[data-page=players]').click() : showPage('players');return false;" class="btn btn-primary btn-sm" style="margin-top:var(--space-md);">👤 去添加球员</a>
         </div>`;
     }
     Object.values(this.charts).forEach(c => c?.destroy());

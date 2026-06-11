@@ -933,6 +933,38 @@
     </div>
   </div>
 
+  <!-- ==================== 首次使用引导蒙层（S1） ==================== -->
+  <div id="onboarding-overlay">
+    <div class="onboarding-box">
+      <button class="onboarding-close" onclick="Auth._closeOnboarding()" title="关闭">✕</button>
+      <div class="onboarding-logo">
+        <span style="font-size:2.5rem;">🏀</span>
+        <span class="onboarding-title">欢迎来到 HoopStats</span>
+      </div>
+      <p class="onboarding-subtitle">专业级篮球综合数据平台，记录每一个精彩瞬间</p>
+      <div class="onboarding-features">
+        <div class="onboarding-feature-card">
+          <div class="onboarding-feature-icon">🏆</div>
+          <div class="onboarding-feature-name">比赛记录</div>
+          <div class="onboarding-feature-desc">实时记分，Q/W/E 快捷键，15秒上手</div>
+        </div>
+        <div class="onboarding-feature-card">
+          <div class="onboarding-feature-icon">📊</div>
+          <div class="onboarding-feature-name">数据看板</div>
+          <div class="onboarding-feature-desc">赛后自动生成统计，投篮命中率一目了然</div>
+        </div>
+        <div class="onboarding-feature-card">
+          <div class="onboarding-feature-icon">☁</div>
+          <div class="onboarding-feature-name">云同步</div>
+          <div class="onboarding-feature-desc">点击「同步数据」登录后，跨设备访问你的数据</div>
+        </div>
+      </div>
+      <button class="btn btn-primary onboarding-cta" onclick="Auth._closeOnboarding()">
+        开始使用 →
+      </button>
+    </div>
+  </div>
+
   <!-- Toast 容器 -->
   <div id="toast-container" class="toast-container"></div>
 

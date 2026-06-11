@@ -14,11 +14,33 @@ const Auth = {
   USER_KEY: 'hoopstats_user',
   ANON_KEY: 'hoopstats_anonymous_id',
 
+  /** 首次使用引导 key */
+  ONBOARDED_KEY: 'hoopstats_onboarded',
+
   /**
-   * 初始化 —— 检查登录状态
+   * 初始化 —— 检查登录状态，并在首次访问时展示引导蒙层
    */
   init() {
     this.updateNavDisplay();
+    this.showOnboardingIfNeeded();
+  },
+
+  /**
+   * 若用户从未引导过，则显示 onboarding overlay
+   */
+  showOnboardingIfNeeded() {
+    if (localStorage.getItem(this.ONBOARDED_KEY)) return;
+    const overlay = document.getElementById('onboarding-overlay');
+    if (overlay) overlay.classList.add('active');
+  },
+
+  /**
+   * 关闭 onboarding overlay 并记录已引导标志
+   */
+  _closeOnboarding() {
+    localStorage.setItem(this.ONBOARDED_KEY, '1');
+    const overlay = document.getElementById('onboarding-overlay');
+    if (overlay) overlay.classList.remove('active');
   },
 
   /**

@@ -3371,3 +3371,226 @@ body {
     font-size: 1.2rem;
   }
 }
+
+/* =============================================
+   S1: 首次使用引导蒙层 (Onboarding Overlay)
+   ============================================= */
+#onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(10, 10, 15, 0.92);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+
+#onboarding-overlay.active {
+  display: flex;
+  animation: fadeInScale 0.35s ease both;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.onboarding-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 40px 36px 32px;
+  max-width: 680px;
+  width: 100%;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+.onboarding-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.onboarding-close:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.onboarding-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.onboarding-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.onboarding-subtitle {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.onboarding-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: 32px;
+}
+
+@media (max-width: 540px) {
+  .onboarding-features {
+    grid-template-columns: 1fr;
+  }
+}
+
+.onboarding-feature-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.onboarding-feature-card:hover {
+  border-color: var(--accent-orange);
+  transform: translateY(-2px);
+}
+
+.onboarding-feature-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.onboarding-feature-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+.onboarding-feature-desc {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.onboarding-cta {
+  font-size: 1rem;
+  padding: 12px 36px;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* =============================================
+   S3: 比赛卡片投篮命中率摘要
+   ============================================= */
+.game-shooting-summary {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 8px;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+/* BoxScore FG% 列高亮 */
+.bs-fgpct {
+  color: var(--accent-orange);
+  font-weight: 600;
+}
+
+/* =============================================
+   S4: 战报分享横幅
+   ============================================= */
+.game-report-banner {
+  background: linear-gradient(135deg, rgba(255,107,53,0.12), rgba(13,27,42,0.9));
+  border: 1px solid rgba(255,107,53,0.35);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: var(--space-md);
+}
+
+.report-banner-title {
+  font-weight: 600;
+  color: var(--accent-orange);
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+.report-game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-game-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  flex-wrap: wrap;
+}
+
+.report-game-item:hover {
+  border-color: var(--accent-orange);
+  background: var(--bg-card-hover);
+}
+
+.report-game-item > span:first-child {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+/* btn-xs utility */
+.btn-xs {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent-orange);
+  color: var(--accent-orange);
+}
+
+.btn-outline:hover {
+  background: var(--accent-orange);
+  color: #fff;
+}
+

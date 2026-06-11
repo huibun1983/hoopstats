@@ -112,8 +112,12 @@ const BlogManager = {
 
     if (!container) return;
 
+    // S4: 渲染未分享比赛战报入口
+    const reportBannerHtml = this._buildGameReportBanner();
+
     if (posts.length === 0) {
       container.innerHTML = `
+        ${reportBannerHtml}
         <div class="empty-state">
           <div class="empty-icon">📝</div>
           <div class="empty-title">暂无博文</div>
@@ -126,7 +130,7 @@ const BlogManager = {
       return;
     }
 
-    container.innerHTML = posts.map(post => {
+    container.innerHTML = reportBannerHtml + posts.map(post => {
       const category = this.CATEGORIES.find(c => c.value === post.category);
       return `
         <div class="card blog-card" onclick="BlogManager.showDetail('${post.id}')">
@@ -150,6 +154,133 @@ const BlogManager = {
         </div>
       `;
     }).join('');
+  },
+
+  /**
+   * 构建最近已完赛比赛的快速分享战报横幅 HTML
+   * @returns {string} HTML 字符串
+   */
+  _buildGameReportBanner() {
+    if (typeof DB === 'undefined') return '';
+    const allGames = DB.getGames ? DB.getGames() : [];
+    const endedGames = allGames
+      .filter(g => g.status === 'ended')
+      .slice(0, 3);  // 最近3场
+    if (endedGames.length === 0) return '';
+
+    const teams = DB.getTeams ? DB.getTeams() : [];
+
+    const itemsHtml = endedGames.map(game => {
+      const homeTeam = teams.find(t => t.id === game.homeTeamId);
+      const awayTeam = teams.find(t => t.id === game.awayTeamId);
+      const homeName = homeTeam?.name || '主队';
+      const awayName = awayTeam?.name || '客队';
+      const label = `${homeName} ${game.homeScore || 0} - ${game.awayScore || 0} ${awayName}`;
+      return `
+        <div class="report-game-item" onclick="BlogManager.shareGameReport('${game.id}')">
+          <span>${label}</span>
+          <span class="badge badge-success">已结束</span>
+          <button class="btn btn-xs btn-outline" onclick="event.stopPropagation();BlogManager.shareGameReport('${game.id}')">✍️ 发布战报</button>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="game-report-banner" id="game-report-banner">
+        <div class="report-banner-title">📢 你有未分享的比赛战报</div>
+        <div class="report-game-list">${itemsHtml}</div>
+      </div>`;
+  },
+
+  /**
+   * 打开写文章弹窗并预填写战报内容
+   * @param {string} gameId 比赛 ID
+   */
+  shareGameReport(gameId) {
+    if (typeof DB === 'undefined') return;
+    const game = (DB.getGames ? DB.getGames() : []).find(g => g.id === gameId);
+    if (!game) return;
+
+    const teams = DB.getTeams ? DB.getTeams() : [];
+    const homeTeam = teams.find(t => t.id === game.homeTeamId);
+    const awayTeam = teams.find(t => t.id === game.awayTeamId);
+    const homeName = homeTeam?.name || '主队';
+    const awayName = awayTeam?.name || '客队';
+    const homeScore = game.homeScore || 0;
+    const awayScore = game.awayScore || 0;
+
+    // 简化版投篮数据计算
+    const events = game.events || [];
+    const homePids = new Set((game.homePlayers || []).map(p => p.id));
+    const awayPids = new Set((game.awayPlayers || []).map(p => p.id));
+    let homeFgm = 0, homeFga = 0, awayFgm = 0, awayFga = 0;
+    const playerPts = {};
+    events.forEach(ev => {
+      const pid = ev.playerId;
+      if (!pid) return;
+      const isHome = homePids.has(pid);
+      const isAway = awayPids.has(pid);
+      if (ev.action === '2分命中') {
+        if (isHome) { homeFgm++; homeFga++; } else if (isAway) { awayFgm++; awayFga++; }
+        playerPts[pid] = (playerPts[pid] || 0) + 2;
+      } else if (ev.action === '3分命中') {
+        if (isHome) { homeFgm++; homeFga++; } else if (isAway) { awayFgm++; awayFga++; }
+        playerPts[pid] = (playerPts[pid] || 0) + 3;
+      } else if (ev.action === '罚球命中') {
+        playerPts[pid] = (playerPts[pid] || 0) + 1;
+      } else if (ev.action === '2分不中') {
+        if (isHome) { homeFga++; } else if (isAway) { awayFga++; }
+      } else if (ev.action === '3分不中') {
+        if (isHome) { homeFga++; } else if (isAway) { awayFga++; }
+      }
+    });
+
+    const homeFgPct = homeFga > 0 ? (homeFgm / homeFga * 100).toFixed(1) : '0.0';
+    const awayFgPct = awayFga > 0 ? (awayFgm / awayFga * 100).toFixed(1) : '0.0';
+
+    // 找出首席得分球员
+    const allPlayers = [...(game.homePlayers || []), ...(game.awayPlayers || [])];
+    let topPlayer = null, topPts = 0;
+    allPlayers.forEach(p => {
+      if ((playerPts[p.id] || 0) > topPts) {
+        topPts = playerPts[p.id];
+        topPlayer = p;
+      }
+    });
+
+    const dateStr = new Date(game.date).toLocaleDateString('zh-CN');
+    const title = `${homeName} ${homeScore}-${awayScore} ${awayName} 赛后复盘`;
+    const content = [
+      `📅 比赛日期：${dateStr}`,
+      `🏆 最终比分：${homeName} ${homeScore} - ${awayScore} ${awayName}`,
+      '',
+      `📊 投篮数据`,
+      `• ${homeName}：FG ${homeFgm}/${homeFga}（${homeFgPct}%）`,
+      `• ${awayName}：FG ${awayFgm}/${awayFga}（${awayFgPct}%）`,
+      '',
+      topPlayer ? `⭐ 首席得分：${topPlayer.name} ${topPts} 分` : '',
+      '',
+      `✍️ 赛后感想：`,
+      `（在这里写下你的比赛感想...）`
+    ].filter(Boolean).join('\n');
+
+    // 打开创建弹窗并预填内容
+    this.showCreateModal();
+    setTimeout(() => {
+      const titleEl = document.getElementById('blog-title');
+      const contentEl = document.getElementById('blog-content');
+      const catEl = document.getElementById('blog-category');
+      if (titleEl) titleEl.value = title;
+      if (contentEl) contentEl.value = content;
+      if (catEl) {
+        // 设置为「赛事战报」分类
+        for (let i = 0; i < catEl.options.length; i++) {
+          if (catEl.options[i].value === '战报') {
+            catEl.selectedIndex = i;
+            break;
+          }
+        }
+      }
+    }, 50);
   },
 
   /** 渲染帖子详情（模态框） */
