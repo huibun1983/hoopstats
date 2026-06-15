@@ -1669,12 +1669,8 @@ const GameManager = {
       DB.updateGame(gameId, game);
     }
 
-    this.currentGame = null;
-    Toast.show('比赛已结束', 'success');
-
-    document.getElementById('page-score').classList.add('hidden');
-    document.getElementById('page-games').classList.remove('hidden');
-    this.render();
+    // 显示庆祝弹窗（MVP + 连胜）
+    this.showCelebrationModal(game);
   },
 
   /**
@@ -2180,7 +2176,39 @@ const GameManager = {
       .filter(s => s && (s.pts > 0 || s.reb > 0 || s.ast > 0 || s.pf > 0))
       .sort((a, b) => b.pts - a.pts);
 
-    return { home, away };
+    // 计算 MVP（加权得分最高者）
+    let mvp = null, bestScore = -Infinity;
+    [...home, ...away].forEach(p => {
+      if (!p) return;
+      const sc = p.pts + p.reb * 1.2 + p.ast * 1.2 + p.stl * 1.5 + p.blk * 1.5 - p.tov;
+      if (sc > bestScore) { bestScore = sc; mvp = p; }
+    });
+
+    return { home, away, mvp };
+  },
+
+  /**
+   * 计算比赛 MVP（加权得分最高者）—— 对外接口
+   */
+  calcMVP() {
+    const { mvp } = this.calcBoxScore();
+    return mvp || null;
+  },
+
+  /**
+   * 计算球队当前连胜场次（仅统计 ended 比赛，按赛事ID倒序）
+   */
+  getTeamStreak(teamId) {
+    const games = (DB.getGames() || [])
+      .filter(g => g.status === 'ended' && (g.homeTeamId === teamId || g.awayTeamId === teamId))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    let streak = 0;
+    for (const g of games) {
+      const isHome = g.homeTeamId === teamId;
+      const won = isHome ? g.homeScore > g.awayScore : g.awayScore > g.homeScore;
+      if (won) { streak++; } else { break; }
+    }
+    return streak;
   },
 
   /**
@@ -2197,7 +2225,7 @@ const GameManager = {
       return;
     }
 
-    const { home, away } = this.calcBoxScore();
+    const { home, away, mvp } = this.calcBoxScore();
     const hasData = home.length > 0 || away.length > 0;
 
     if (!hasData) {
@@ -2253,7 +2281,20 @@ const GameManager = {
       return t ? `🏀 ${t.name}` : '🏀 客队';
     })();
 
+    // MVP 横幅
+    let mvpHtml = '';
+    if (mvp && mvp.name) {
+      const mvpTeamName = mvp.team === 'home' ? homeTeamName.replace('🏀 ', '') : awayTeamName.replace('🏀 ', '');
+      mvpHtml = `
+        <div class="boxscore-mvp">
+          🏆 MVP: <strong>${mvp.name}</strong> (${mvpTeamName})<br>
+          <small>${mvp.pts}分 ${mvp.reb}板 ${mvp.ast}助 ${mvp.stl}断 ${mvp.blk}帽</small>
+        </div>
+      `;
+    }
+
     content.innerHTML = `
+      ${mvpHtml}
       ${renderTeamTable(homeTeamName, home, 'home')}
       ${renderTeamTable(awayTeamName, away, 'away')}
     `;

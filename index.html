@@ -448,9 +448,14 @@
           <h1 class="page-title">📊 数据看板</h1>
           <p class="page-subtitle" id="dash-data-summary">加载中...</p>
         </div>
-        <div class="dash-tabs" id="dash-tabs">
-          <button class="dash-tab active" data-view="team" onclick="Dashboard.switchView('team')">🏀 球队视角</button>
-          <button class="dash-tab" data-view="player" onclick="Dashboard.switchView('player')">👤 个人视角</button>
+        <div style="display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;">
+          <div class="checkin-area" id="checkin-area">
+            <!-- 打卡按钮 + 日历热力图（由 Dashboard.renderCheckin() 渲染）-->
+          </div>
+          <div class="dash-tabs" id="dash-tabs">
+            <button class="dash-tab active" data-view="team" onclick="Dashboard.switchView('team')">🏀 球队视角</button>
+            <button class="dash-tab" data-view="player" onclick="Dashboard.switchView('player')">👤 个人视角</button>
+          </div>
         </div>
       </div>
 
@@ -1031,5 +1036,34 @@
       }
     });
   </script>
+  <!-- 比赛结束庆祝弹窗 -->
+  <div id="celebration-modal" class="modal-overlay" style="display:none;">
+    <div class="modal celebration-modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="celebration-title">🎉 比赛结束</h3>
+        <button class="modal-close" onclick="GameManager.closeCelebration()">✕</button>
+      </div>
+      <div class="modal-body" id="celebration-body">
+        <!-- 动态填充：最终比分、MVP、连胜信息 -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="GameManager.closeCelebrationAndGoBack()">返回列表</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 打卡弹窗（日历热力图） -->
+  <div id="checkin-modal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">📅 打卡日历</h3>
+        <button class="modal-close" onclick="Dashboard.closeCheckin()">✕</button>
+      </div>
+      <div class="modal-body" id="checkin-body">
+        <!-- 动态填充：日历热力图 -->
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
