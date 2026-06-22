@@ -3594,3 +3594,205 @@ body {
   color: #fff;
 }
 
+/* ============================================================
+   游戏化 Tier 1 — 打卡日历 + 连胜徽章 + 庆祝弹窗
+   ============================================================ */
+
+/* --- gamification-zone（Dashboard 页头部区域）--- */
+.gamification-zone {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* --- 打卡日历 Widget --- */
+.checkin-widget {
+  background: var(--surface-2, #1a1a2e);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 12px;
+  padding: 12px 16px;
+  min-width: 220px;
+}
+.cw-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.cw-title { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary, #aaa); }
+.cw-streak { font-size: 0.8rem; font-weight: 700; color: #FF6B35; }
+.cw-days {
+  display: flex;
+  gap: 6px;
+}
+.cw-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.cw-dot {
+  font-size: 1.1rem;
+  line-height: 1;
+  filter: grayscale(1);
+  opacity: 0.35;
+  transition: filter 0.2s, opacity 0.2s;
+}
+.cw-day.checked .cw-dot {
+  filter: none;
+  opacity: 1;
+}
+.cw-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #aaa);
+}
+
+/* --- 连胜徽章 Widget --- */
+.streak-widget { }
+.streak-widget-inner {
+  background: var(--surface-2, #1a1a2e);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.streak-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #aaa);
+  margin-bottom: 8px;
+}
+.streak-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+.streak-badge.hot {
+  background: rgba(255,107,53,0.15);
+  border-color: rgba(255,107,53,0.4);
+}
+.streak-team { color: var(--text-primary, #fff); font-weight: 600; }
+.streak-count { color: #FF6B35; font-weight: 700; }
+
+/* --- 庆祝弹窗 --- */
+.cel-overlay {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+}
+.celebration-modal {
+  position: relative;
+  max-width: 420px;
+  width: 92%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface-1, #13131f);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+  padding: 0;
+}
+.cel-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #aaa);
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+  padding: 4px 8px;
+}
+.cel-close-btn:hover { color: #fff; }
+.cel-body {
+  padding: 32px 24px 20px;
+  text-align: center;
+  position: relative;
+}
+.cel-confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.cel-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 2;
+}
+.cel-score {
+  font-size: 1rem;
+  color: var(--text-secondary, #bbb);
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.15rem;
+}
+.cel-mvp {
+  background: rgba(255,107,53,0.12);
+  border: 1px solid rgba(255,107,53,0.35);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 2;
+}
+.cel-mvp-crown { font-size: 1.8rem; margin-bottom: 4px; }
+.cel-mvp-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #FF6B35; margin-bottom: 4px; }
+.cel-mvp-name { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 3px; }
+.cel-mvp-stats { font-size: 0.78rem; color: var(--text-secondary, #aaa); }
+.cel-streak {
+  background: rgba(255,165,0,0.12);
+  border: 1px solid rgba(255,165,0,0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffd93d;
+  display: inline-block;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+}
+.cel-checkin {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #aaa);
+  position: relative;
+  z-index: 2;
+}
+.cel-actions {
+  padding: 0 24px 24px;
+  display: flex;
+  justify-content: center;
+}
+.cel-actions .btn {
+  min-width: 160px;
+}
+
+/* --- 响应式 --- */
+@media (max-width: 480px) {
+  .gamification-zone { gap: var(--space-sm); }
+  .checkin-widget { min-width: 0; width: 100%; }
+  .cw-days { gap: 4px; }
+  .cw-dot { font-size: 0.9rem; }
+  .cel-title { font-size: 1.4rem; }
+}
+

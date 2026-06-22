@@ -2299,7 +2299,281 @@ const GameManager = {
       ${renderTeamTable(awayTeamName, away, 'away')}
     `;
   },
+
+  // ============================================================
+  // 游戏化 Tier 1 — 庆祝弹窗
+  // ============================================================
+
+  /**
+   * 比赛结束后显示庆祝弹窗（MVP + 连胜 + 打卡）
+   */
+  showCelebrationModal(game) {
+    // 自动打卡
+    if (typeof CheckinSystem !== 'undefined') CheckinSystem.checkin();
+
+    const el = document.getElementById('celebration-modal');
+    if (!el) {
+      // 弹窗不存在时降级处理：直接跳回列表
+      setTimeout(() => this.backToList(), 400);
+      return;
+    }
+
+    // 计算胜者
+    const homeScore = game ? game.homeScore : 0;
+    const awayScore = game ? game.awayScore : 0;
+    const homeTeam = game && game.homeTeamId ? DB.getTeams().find(t => t.id === game.homeTeamId) : null;
+    const awayTeam = game && game.awayTeamId ? DB.getTeams().find(t => t.id === game.awayTeamId) : null;
+    const homeName = homeTeam ? homeTeam.name : '主队';
+    const awayName = awayTeam ? awayTeam.name : '客队';
+
+    let winnerName = '';
+    let isDraw = false;
+    if (homeScore > awayScore) winnerName = homeName;
+    else if (awayScore > homeScore) winnerName = awayName;
+    else isDraw = true;
+
+    // 计算 MVP（加权得分）
+    const { home: homeStats, away: awayStats, mvp } = this.calcBoxScore ? this.calcBoxScore() : { home: [], away: [], mvp: null };
+
+    // 连胜
+    const streak = (!isDraw && winnerName && typeof getTeamWinStreak !== 'undefined')
+      ? getTeamWinStreak(winnerName)
+      : 0;
+
+    // 打卡连续天数
+    const checkinStreak = typeof CheckinSystem !== 'undefined' ? CheckinSystem.getCurrentStreak() : 0;
+
+    // 填充内容
+    const bodyEl = el.querySelector('#celebration-body');
+    if (bodyEl) {
+      const mvpBlock = (mvp && mvp.pts > 0) ? (() => {
+        const mvpScore = Math.round(mvp.pts + (mvp.reb || 0) * 1.2 + (mvp.ast || 0) * 1.5 + (mvp.stl || 0) * 2 + (mvp.blk || 0) * 2 - (mvp.to || 0));
+        return `<div class="cel-mvp">
+          <div class="cel-mvp-crown">👑</div>
+          <div class="cel-mvp-label">全场 MVP</div>
+          <div class="cel-mvp-name">${mvp.num ? '#' + mvp.num + ' ' : ''}${mvp.name}</div>
+          <div class="cel-mvp-stats">${mvp.pts}分 · ${mvp.reb || 0}板 · ${mvp.ast || 0}助 · MVP分: ${mvpScore}</div>
+        </div>`;
+      })() : '';
+
+      const streakBlock = (streak >= 2)
+        ? `<div class="cel-streak">🔥 ${winnerName} ${streak}连胜！</div>`
+        : '';
+
+      bodyEl.innerHTML = `
+        <canvas id="confetti-canvas" class="cel-confetti"></canvas>
+        <div class="cel-title">${isDraw ? '🤝 平局！' : '🏆 ' + winnerName + ' 胜利！'}</div>
+        <div class="cel-score">${homeName} ${homeScore} : ${awayScore} ${awayName}</div>
+        ${mvpBlock}
+        ${streakBlock}
+        <div class="cel-checkin">📅 已打卡 · 连续 ${checkinStreak} 天</div>
+      `;
+    }
+
+    // 彩带动画
+    if (typeof triggerConfetti !== 'undefined') triggerConfetti();
+
+    // 显示弹窗
+    el.style.display = 'flex';
+  },
+
+  closeCelebration() {
+    const el = document.getElementById('celebration-modal');
+    if (el) el.style.display = 'none';
+  },
+
+  closeCelebrationAndGoBack() {
+    this.closeCelebration();
+    this.backToList();
+  },
 };
+
+// ============================================================
+// 游戏化 Tier 1 — 全局工具函数
+// ============================================================
+
+/**
+ * 打卡日历系统（localStorage 持久化）
+ */
+const CheckinSystem = {
+  STORAGE_KEY: 'hoopstats_checkins',
+
+  getRecords() {
+    try {
+      const d = localStorage.getItem(this.STORAGE_KEY);
+      return d ? JSON.parse(d) : [];
+    } catch (e) { return []; }
+  },
+
+  /** 记录今日打卡（每天只记一次） */
+  checkin() {
+    const today = new Date().toISOString().slice(0, 10);
+    const records = this.getRecords();
+    if (!records.includes(today)) {
+      records.push(today);
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(records));
+    }
+  },
+
+  /** 获取最近 N 天打卡情况，返回 [{date, checked}] */
+  getWeekStatus(days = 7) {
+    const records = this.getRecords();
+    const result = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const ds = d.toISOString().slice(0, 10);
+      result.push({ date: ds, checked: records.includes(ds) });
+    }
+    return result;
+  },
+
+  /** 当前连续打卡天数 */
+  getCurrentStreak() {
+    const records = this.getRecords().sort();
+    let streak = 0;
+    const today = new Date().toISOString().slice(0, 10);
+    let cursor = today;
+    while (records.includes(cursor)) {
+      streak++;
+      const prev = new Date(cursor);
+      prev.setDate(prev.getDate() - 1);
+      cursor = prev.toISOString().slice(0, 10);
+    }
+    return streak;
+  }
+};
+
+/**
+ * 获取球队连续胜场数（基于 DB.getGames() 倒序）
+ */
+function getTeamWinStreak(teamName) {
+  const games = DB.getGames ? DB.getGames() : [];
+  const finished = games.filter(g => g.status === 'finished' || g.status === 'ended' || g.homeScore !== undefined)
+    .sort((a, b) => (b.endedAt || b.createdAt || 0) - (a.endedAt || a.createdAt || 0));
+
+  let streak = 0;
+  for (const g of finished) {
+    const homeTeam = DB.getTeams ? DB.getTeams().find(t => t.id === g.homeTeamId) : null;
+    const awayTeam = DB.getTeams ? DB.getTeams().find(t => t.id === g.awayTeamId) : null;
+    const homeName = homeTeam ? homeTeam.name : '';
+    const awayName = awayTeam ? awayTeam.name : '';
+    const isHome = homeName === teamName;
+    const isAway = awayName === teamName;
+    if (!isHome && !isAway) continue;
+    const homeWon = (g.homeScore || 0) > (g.awayScore || 0);
+    const won = (isHome && homeWon) || (isAway && !homeWon && g.homeScore !== g.awayScore);
+    if (won) streak++;
+    else break;
+  }
+  return streak;
+}
+
+/**
+ * 简易彩带粒子动画（canvas）
+ */
+function triggerConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 300;
+  canvas.height = canvas.offsetHeight || 200;
+
+  const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#c77dff', '#FF6B35'];
+  const particles = Array.from({ length: 80 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -10 - Math.random() * 60,
+    r: 4 + Math.random() * 5,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx: (Math.random() - 0.5) * 3,
+    vy: 2 + Math.random() * 4,
+    rotation: Math.random() * 360,
+    rotV: (Math.random() - 0.5) * 10
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.5);
+      ctx.restore();
+      p.x += p.vx; p.y += p.vy; p.rotation += p.rotV;
+      p.vy += 0.05;
+    });
+    frame++;
+    if (frame < 120) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+/**
+ * 渲染打卡日历 Widget（插入 #checkin-widget 容器）
+ */
+function renderCheckinWidget() {
+  const container = document.getElementById('checkin-widget');
+  if (!container) return;
+
+  const week = CheckinSystem.getWeekStatus(7);
+  const streak = CheckinSystem.getCurrentStreak();
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+  const days = week.map(item => {
+    const d = new Date(item.date + 'T00:00:00');
+    const label = weekdays[d.getDay()];
+    return `<div class="cw-day ${item.checked ? 'checked' : ''}">
+      <span class="cw-dot">${item.checked ? '🏀' : '○'}</span>
+      <span class="cw-label">${label}</span>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="cw-header">
+      <span class="cw-title">📅 本周打卡</span>
+      <span class="cw-streak">${streak > 0 ? '🔥 连续' + streak + '天' : '开始打卡'}</span>
+    </div>
+    <div class="cw-days">${days}</div>
+  `;
+}
+
+/**
+ * 渲染连胜徽章 Widget（插入 #streak-widget 容器）
+ */
+function renderStreakWidget() {
+  const container = document.getElementById('streak-widget');
+  if (!container) return;
+
+  const games = DB.getGames ? DB.getGames() : [];
+  const finished = games.filter(g => g.homeScore !== undefined && (g.homeScore !== 0 || g.awayScore !== 0));
+  if (finished.length === 0) { container.innerHTML = ''; return; }
+
+  const teams = DB.getTeams ? DB.getTeams() : [];
+  const badges = teams.map(team => {
+    const streak = getTeamWinStreak(team.name);
+    if (streak < 1) return '';
+    const emoji = streak >= 5 ? '🔥🔥🔥' : streak >= 3 ? '🔥🔥' : '🔥';
+    return `<div class="streak-badge ${streak >= 3 ? 'hot' : ''}">
+      <span class="streak-team">${team.name}</span>
+      <span class="streak-count">${emoji} ${streak}连胜</span>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  if (!badges) { container.innerHTML = ''; return; }
+
+  container.innerHTML = `<div class="streak-widget-inner">
+    <div class="streak-title">🏆 球队连胜</div>
+    <div class="streak-badges">${badges}</div>
+  </div>`;
+}
 
 // 导出
 window.GameManager = GameManager;
+window.CheckinSystem = CheckinSystem;
+window.getTeamWinStreak = getTeamWinStreak;
+window.triggerConfetti = triggerConfetti;
+window.renderCheckinWidget = renderCheckinWidget;
+window.renderStreakWidget = renderStreakWidget;

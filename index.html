@@ -449,8 +449,9 @@
           <p class="page-subtitle" id="dash-data-summary">加载中...</p>
         </div>
         <div style="display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;">
-          <div class="checkin-area" id="checkin-area">
-            <!-- 打卡按钮 + 日历热力图（由 Dashboard.renderCheckin() 渲染）-->
+          <div class="gamification-zone">
+            <div id="checkin-widget" class="checkin-widget"></div>
+            <div id="streak-widget" class="streak-widget"></div>
           </div>
           <div class="dash-tabs" id="dash-tabs">
             <button class="dash-tab active" data-view="team" onclick="Dashboard.switchView('team')">🏀 球队视角</button>
@@ -1014,6 +1015,9 @@
         if (typeof Dashboard !== 'undefined' && typeof Dashboard.init === 'function') {
           Dashboard.init();
         }
+        // 游戏化 widgets
+        if (typeof renderCheckinWidget !== 'undefined') renderCheckinWidget();
+        if (typeof renderStreakWidget !== 'undefined') renderStreakWidget();
       }
     }
 
@@ -1037,17 +1041,14 @@
     });
   </script>
   <!-- 比赛结束庆祝弹窗 -->
-  <div id="celebration-modal" class="modal-overlay" style="display:none;">
+  <div id="celebration-modal" class="modal-overlay cel-overlay">
     <div class="modal celebration-modal">
-      <div class="modal-header">
-        <h3 class="modal-title" id="celebration-title">🎉 比赛结束</h3>
-        <button class="modal-close" onclick="GameManager.closeCelebration()">✕</button>
+      <button class="modal-close cel-close-btn" onclick="GameManager.closeCelebration()">✕</button>
+      <div id="celebration-body" class="cel-body">
+        <!-- 动态填充：彩带canvas / 标题 / 比分 / MVP / 连胜 / 打卡 -->
       </div>
-      <div class="modal-body" id="celebration-body">
-        <!-- 动态填充：最终比分、MVP、连胜信息 -->
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" onclick="GameManager.closeCelebrationAndGoBack()">返回列表</button>
+      <div class="cel-actions">
+        <button class="btn btn-primary" onclick="GameManager.closeCelebrationAndGoBack()">🏀 返回列表</button>
       </div>
     </div>
   </div>
