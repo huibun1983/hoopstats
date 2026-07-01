@@ -33,6 +33,7 @@ const BlogManager = {
     post.updatedAt = post.createdAt;
     posts.unshift(post);
     this.savePosts(posts);
+    this.syncToCloud();
     return post;
   },
 
@@ -43,6 +44,7 @@ const BlogManager = {
     if (idx !== -1) {
       posts[idx] = { ...posts[idx], ...updates, updatedAt: new Date().toISOString() };
       this.savePosts(posts);
+      this.syncToCloud();
       return posts[idx];
     }
     return null;
@@ -52,6 +54,7 @@ const BlogManager = {
   deletePost(id) {
     const posts = this.getPosts();
     this.savePosts(posts.filter(p => p.id !== id));
+    this.syncToCloud();
   },
 
   /** 点赞/取消点赞 */
@@ -71,6 +74,7 @@ const BlogManager = {
       post.likes = Math.max(0, (post.likes || 0) - 1);
     }
     this.savePosts(posts);
+    this.syncToCloud();
     return post;
   },
 
@@ -90,6 +94,7 @@ const BlogManager = {
     };
     post.comments.push(comment);
     this.savePosts(posts);
+    this.syncToCloud();
     return comment;
   },
 
@@ -454,6 +459,96 @@ const BlogManager = {
       return Auth.getUser().id;
     }
     return null;
+  },
+
+  // ========== 云端同步 ==========
+
+  /** API 基地址 */
+  _getApiBase() {
+    return typeof Auth !== 'undefined' ? Auth.API_BASE : 'https://api.statstalking.com';
+  },
+
+  /** 获取当前 JWT Token */
+  _getToken() {
+    if (typeof Auth !== 'undefined' && Auth.isLoggedIn()) {
+      return Auth.getToken();
+    }
+    return null;
+  },
+
+  /** 同步博客数据到云端（静默） */
+  async syncToCloud() {
+    const token = this._getToken();
+    if (!token) return; // 未登录，不同步
+
+    try {
+      const posts = this.getPosts();
+      const res = await fetch(`${this._getApiBase()}/data/blogs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ data: posts, source: 'local' })
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) console.log('[BlogSync] ✅ 云端同步成功');
+      }
+    } catch (err) {
+      console.log('[BlogSync] ⚠️ 同步失败（网络问题，数据仍在本地）:', err.message);
+    }
+  },
+
+  /** 从云端拉取博客数据并合并 */
+  async pullFromCloud() {
+    const token = this._getToken();
+    if (!token) return null;
+
+    try {
+      const res = await fetch(`${this._getApiBase()}/data/blogs`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return null;
+      const result = await res.json();
+      if (!result.data) return null;
+
+      const cloudPosts = result.data;
+      const localPosts = this.getPosts();
+      const localMap = {};
+      localPosts.forEach(p => { localMap[p.id] = p; });
+
+      // 合并策略：云端数据覆盖本地（云端版本更新）
+      let merged = [...cloudPosts];
+      // 添加云端没有但本地有的帖子
+      cloudPosts.forEach(cp => {
+        if (localMap[cp.id]) {
+          const localTime = new Date(localMap[cp.id].updatedAt || localMap[cp.id].createdAt).getTime();
+          const cloudTime = new Date(cp.updatedAt || cp.createdAt).getTime();
+          // 如果本地版本更新，保留本地版本
+          if (localTime > cloudTime) {
+            const idx = merged.findIndex(p => p.id === cp.id);
+            if (idx !== -1) merged[idx] = localMap[cp.id];
+          }
+        }
+      });
+      localPosts.forEach(lp => {
+        if (!merged.find(p => p.id === lp.id)) merged.push(lp);
+      });
+
+      this.savePosts(merged);
+      console.log('[BlogSync] 📥 云端拉取成功，共', merged.length, '条');
+      return merged;
+    } catch (err) {
+      console.log('[BlogSync] ⚠️ 拉取失败:', err.message);
+      return null;
+    }
+  },
+
+  /** 初始化：加载时自动从云端拉取 */
+  async init() {
+    const token = this._getToken();
+    if (token) {
+      await this.pullFromCloud();
+    }
+    this.render();
   }
 };
 

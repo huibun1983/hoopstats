@@ -7,9 +7,13 @@
 // ==================== CORS ====================
 const ALLOWED_ORIGINS = [
   'https://statstalking.com',
+  'https://hoopstats.pages.dev',
+  'https://a1ae518e.hoopstats.pages.dev',
   'https://api.statstalking.com',
   'http://localhost:8910',
-  'http://127.0.0.1:8910'
+  'http://127.0.0.1:8910',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500'
 ];
 
 function getCORSHeaders(origin) {
@@ -294,7 +298,7 @@ async function handleRequest(request, env) {
   }
 
   // POST /data/:entity (teams | players | games)
-  const dataMatch = path.match(/^\/data\/(teams|players|games)$/);
+  const dataMatch = path.match(/^\/data\/(teams|players|games|blogs)$/);
   if (dataMatch && method === 'POST') {
     const payload = await authenticate(request, env);
     if (!payload) return error('Unauthorized', 401);
@@ -313,6 +317,19 @@ async function handleRequest(request, env) {
     return json({ success: true, synced: entity });
   }
 
+  // GET /data/:entity — retrieve synced data
+  if (dataMatch && method === 'GET') {
+    const payload = await authenticate(request, env);
+    if (!payload) return error('Unauthorized', 401);
+
+    const entity = dataMatch[1];
+    const row = await env.DB.prepare('SELECT data_json, updated_at FROM user_data WHERE user_id = ? AND data_key = ?')
+      .bind(payload.sub, entity).first();
+    if (!row) return json({ data: null, updatedAt: null });
+
+    return json({ data: JSON.parse(row.data_json), updatedAt: row.updated_at });
+  }
+
   // GET /stats — simple health check
   if (path === '/stats' && method === 'GET') {
     const userCount = await env.DB.prepare('SELECT COUNT(*) as count FROM users').first();
@@ -322,6 +339,11 @@ async function handleRequest(request, env) {
   // POST /api/asr — 语音识别
   if (path === '/api/asr') {
     return handleASR(request, env);
+  }
+
+  // GET / — health check
+  if (path === '/' && method === 'GET') {
+    return json({ status: 'ok', version: '3.10', endpoints: ['/auth/register', '/auth/login', '/data/:entity', '/api/asr', '/stats'] });
   }
 
   return error('Not found', 404);

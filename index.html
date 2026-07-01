@@ -1010,7 +1010,7 @@
       if (page === 'teams')   TeamManager.render();
       if (page === 'players') PlayerManager.render();
       if (page === 'games')   GameManager.render();
-      if (page === 'blog')    BlogManager.render();
+      if (page === 'blog')    BlogManager.init();
       if (page === 'dashboard') {
         if (typeof Dashboard !== 'undefined' && typeof Dashboard.init === 'function') {
           Dashboard.init();
